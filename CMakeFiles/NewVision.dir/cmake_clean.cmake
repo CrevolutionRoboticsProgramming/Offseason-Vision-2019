@@ -1,13 +1,7 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/NewVision.dir/http/server/connection.cpp.o"
-  "CMakeFiles/NewVision.dir/http/server/connection_manager.cpp.o"
-  "CMakeFiles/NewVision.dir/http/server/mime_types.cpp.o"
-  "CMakeFiles/NewVision.dir/http/server/reply.cpp.o"
-  "CMakeFiles/NewVision.dir/http/server/request_handler.cpp.o"
-  "CMakeFiles/NewVision.dir/http/server/request_parser.cpp.o"
-  "CMakeFiles/NewVision.dir/http/server/server.cpp.o"
+  "CMakeFiles/NewVision.dir/Contour.cpp.o"
+  "CMakeFiles/NewVision.dir/UDPHandler.cpp.o"
   "CMakeFiles/NewVision.dir/main.cpp.o"
-  "CMakeFiles/NewVision.dir/opencv-code/cap_gstreamer.cpp.o"
   "NewVision.pdb"
   "NewVision"
 )

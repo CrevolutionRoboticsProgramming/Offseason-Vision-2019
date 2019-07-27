@@ -1,0 +1,4 @@
+SYSTEM:verbose:false;tuning:false
+VISION:low-hue:0;high-hue:255;low-saturation:0;high-saturation:255;low-value:0;high-value:255
+RASPICAM:width:320;height:240;fps:30;shutter_speed:200;exposure_mode:1
+UVCCAM:width:320;height:240;fps:15;exposure:0;exposure_auto:1

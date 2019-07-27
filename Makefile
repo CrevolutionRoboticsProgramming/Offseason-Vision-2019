@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = "/home/pi/New Vision"
+CMAKE_SOURCE_DIR = /home/pi/NewVision
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = "/home/pi/New Vision"
+CMAKE_BINARY_DIR = /home/pi/NewVision
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start "/home/pi/New Vision/CMakeFiles" "/home/pi/New Vision/CMakeFiles/progress.marks"
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/pi/NewVision/CMakeFiles /home/pi/NewVision/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start "/home/pi/New Vision/CMakeFiles" 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/pi/NewVision/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -123,194 +123,59 @@ NewVision/fast:
 	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/build
 .PHONY : NewVision/fast
 
-http/server/connection.o: http/server/connection.cpp.o
+Contour.o: Contour.cpp.o
 
-.PHONY : http/server/connection.o
-
-# target to build an object file
-http/server/connection.cpp.o:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/connection.cpp.o
-.PHONY : http/server/connection.cpp.o
-
-http/server/connection.i: http/server/connection.cpp.i
-
-.PHONY : http/server/connection.i
-
-# target to preprocess a source file
-http/server/connection.cpp.i:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/connection.cpp.i
-.PHONY : http/server/connection.cpp.i
-
-http/server/connection.s: http/server/connection.cpp.s
-
-.PHONY : http/server/connection.s
-
-# target to generate assembly for a file
-http/server/connection.cpp.s:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/connection.cpp.s
-.PHONY : http/server/connection.cpp.s
-
-http/server/connection_manager.o: http/server/connection_manager.cpp.o
-
-.PHONY : http/server/connection_manager.o
+.PHONY : Contour.o
 
 # target to build an object file
-http/server/connection_manager.cpp.o:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/connection_manager.cpp.o
-.PHONY : http/server/connection_manager.cpp.o
+Contour.cpp.o:
+	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/Contour.cpp.o
+.PHONY : Contour.cpp.o
 
-http/server/connection_manager.i: http/server/connection_manager.cpp.i
+Contour.i: Contour.cpp.i
 
-.PHONY : http/server/connection_manager.i
+.PHONY : Contour.i
 
 # target to preprocess a source file
-http/server/connection_manager.cpp.i:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/connection_manager.cpp.i
-.PHONY : http/server/connection_manager.cpp.i
+Contour.cpp.i:
+	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/Contour.cpp.i
+.PHONY : Contour.cpp.i
 
-http/server/connection_manager.s: http/server/connection_manager.cpp.s
+Contour.s: Contour.cpp.s
 
-.PHONY : http/server/connection_manager.s
+.PHONY : Contour.s
 
 # target to generate assembly for a file
-http/server/connection_manager.cpp.s:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/connection_manager.cpp.s
-.PHONY : http/server/connection_manager.cpp.s
+Contour.cpp.s:
+	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/Contour.cpp.s
+.PHONY : Contour.cpp.s
 
-http/server/mime_types.o: http/server/mime_types.cpp.o
+UDPHandler.o: UDPHandler.cpp.o
 
-.PHONY : http/server/mime_types.o
+.PHONY : UDPHandler.o
 
 # target to build an object file
-http/server/mime_types.cpp.o:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/mime_types.cpp.o
-.PHONY : http/server/mime_types.cpp.o
+UDPHandler.cpp.o:
+	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/UDPHandler.cpp.o
+.PHONY : UDPHandler.cpp.o
 
-http/server/mime_types.i: http/server/mime_types.cpp.i
+UDPHandler.i: UDPHandler.cpp.i
 
-.PHONY : http/server/mime_types.i
-
-# target to preprocess a source file
-http/server/mime_types.cpp.i:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/mime_types.cpp.i
-.PHONY : http/server/mime_types.cpp.i
-
-http/server/mime_types.s: http/server/mime_types.cpp.s
-
-.PHONY : http/server/mime_types.s
-
-# target to generate assembly for a file
-http/server/mime_types.cpp.s:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/mime_types.cpp.s
-.PHONY : http/server/mime_types.cpp.s
-
-http/server/reply.o: http/server/reply.cpp.o
-
-.PHONY : http/server/reply.o
-
-# target to build an object file
-http/server/reply.cpp.o:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/reply.cpp.o
-.PHONY : http/server/reply.cpp.o
-
-http/server/reply.i: http/server/reply.cpp.i
-
-.PHONY : http/server/reply.i
+.PHONY : UDPHandler.i
 
 # target to preprocess a source file
-http/server/reply.cpp.i:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/reply.cpp.i
-.PHONY : http/server/reply.cpp.i
+UDPHandler.cpp.i:
+	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/UDPHandler.cpp.i
+.PHONY : UDPHandler.cpp.i
 
-http/server/reply.s: http/server/reply.cpp.s
+UDPHandler.s: UDPHandler.cpp.s
 
-.PHONY : http/server/reply.s
-
-# target to generate assembly for a file
-http/server/reply.cpp.s:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/reply.cpp.s
-.PHONY : http/server/reply.cpp.s
-
-http/server/request_handler.o: http/server/request_handler.cpp.o
-
-.PHONY : http/server/request_handler.o
-
-# target to build an object file
-http/server/request_handler.cpp.o:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/request_handler.cpp.o
-.PHONY : http/server/request_handler.cpp.o
-
-http/server/request_handler.i: http/server/request_handler.cpp.i
-
-.PHONY : http/server/request_handler.i
-
-# target to preprocess a source file
-http/server/request_handler.cpp.i:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/request_handler.cpp.i
-.PHONY : http/server/request_handler.cpp.i
-
-http/server/request_handler.s: http/server/request_handler.cpp.s
-
-.PHONY : http/server/request_handler.s
+.PHONY : UDPHandler.s
 
 # target to generate assembly for a file
-http/server/request_handler.cpp.s:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/request_handler.cpp.s
-.PHONY : http/server/request_handler.cpp.s
-
-http/server/request_parser.o: http/server/request_parser.cpp.o
-
-.PHONY : http/server/request_parser.o
-
-# target to build an object file
-http/server/request_parser.cpp.o:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/request_parser.cpp.o
-.PHONY : http/server/request_parser.cpp.o
-
-http/server/request_parser.i: http/server/request_parser.cpp.i
-
-.PHONY : http/server/request_parser.i
-
-# target to preprocess a source file
-http/server/request_parser.cpp.i:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/request_parser.cpp.i
-.PHONY : http/server/request_parser.cpp.i
-
-http/server/request_parser.s: http/server/request_parser.cpp.s
-
-.PHONY : http/server/request_parser.s
-
-# target to generate assembly for a file
-http/server/request_parser.cpp.s:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/request_parser.cpp.s
-.PHONY : http/server/request_parser.cpp.s
-
-http/server/server.o: http/server/server.cpp.o
-
-.PHONY : http/server/server.o
-
-# target to build an object file
-http/server/server.cpp.o:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/server.cpp.o
-.PHONY : http/server/server.cpp.o
-
-http/server/server.i: http/server/server.cpp.i
-
-.PHONY : http/server/server.i
-
-# target to preprocess a source file
-http/server/server.cpp.i:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/server.cpp.i
-.PHONY : http/server/server.cpp.i
-
-http/server/server.s: http/server/server.cpp.s
-
-.PHONY : http/server/server.s
-
-# target to generate assembly for a file
-http/server/server.cpp.s:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/http/server/server.cpp.s
-.PHONY : http/server/server.cpp.s
+UDPHandler.cpp.s:
+	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/UDPHandler.cpp.s
+.PHONY : UDPHandler.cpp.s
 
 main.o: main.cpp.o
 
@@ -339,33 +204,6 @@ main.cpp.s:
 	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/main.cpp.s
 .PHONY : main.cpp.s
 
-opencv-code/cap_gstreamer.o: opencv-code/cap_gstreamer.cpp.o
-
-.PHONY : opencv-code/cap_gstreamer.o
-
-# target to build an object file
-opencv-code/cap_gstreamer.cpp.o:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/opencv-code/cap_gstreamer.cpp.o
-.PHONY : opencv-code/cap_gstreamer.cpp.o
-
-opencv-code/cap_gstreamer.i: opencv-code/cap_gstreamer.cpp.i
-
-.PHONY : opencv-code/cap_gstreamer.i
-
-# target to preprocess a source file
-opencv-code/cap_gstreamer.cpp.i:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/opencv-code/cap_gstreamer.cpp.i
-.PHONY : opencv-code/cap_gstreamer.cpp.i
-
-opencv-code/cap_gstreamer.s: opencv-code/cap_gstreamer.cpp.s
-
-.PHONY : opencv-code/cap_gstreamer.s
-
-# target to generate assembly for a file
-opencv-code/cap_gstreamer.cpp.s:
-	$(MAKE) -f CMakeFiles/NewVision.dir/build.make CMakeFiles/NewVision.dir/opencv-code/cap_gstreamer.cpp.s
-.PHONY : opencv-code/cap_gstreamer.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -375,33 +213,15 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... NewVision"
 	@echo "... edit_cache"
-	@echo "... http/server/connection.o"
-	@echo "... http/server/connection.i"
-	@echo "... http/server/connection.s"
-	@echo "... http/server/connection_manager.o"
-	@echo "... http/server/connection_manager.i"
-	@echo "... http/server/connection_manager.s"
-	@echo "... http/server/mime_types.o"
-	@echo "... http/server/mime_types.i"
-	@echo "... http/server/mime_types.s"
-	@echo "... http/server/reply.o"
-	@echo "... http/server/reply.i"
-	@echo "... http/server/reply.s"
-	@echo "... http/server/request_handler.o"
-	@echo "... http/server/request_handler.i"
-	@echo "... http/server/request_handler.s"
-	@echo "... http/server/request_parser.o"
-	@echo "... http/server/request_parser.i"
-	@echo "... http/server/request_parser.s"
-	@echo "... http/server/server.o"
-	@echo "... http/server/server.i"
-	@echo "... http/server/server.s"
+	@echo "... Contour.o"
+	@echo "... Contour.i"
+	@echo "... Contour.s"
+	@echo "... UDPHandler.o"
+	@echo "... UDPHandler.i"
+	@echo "... UDPHandler.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
-	@echo "... opencv-code/cap_gstreamer.o"
-	@echo "... opencv-code/cap_gstreamer.i"
-	@echo "... opencv-code/cap_gstreamer.s"
 .PHONY : help
 
 
