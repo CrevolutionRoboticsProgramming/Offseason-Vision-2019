@@ -49,7 +49,7 @@ int main()
     // Start streaming
     sprintf(buffer, "LD_LIBRARY_PATH=/usr/local/lib mjpg_streamer -i \"input_file.so -f %d -n %s -d 0\" -o \"output_http.so -w /tmp -p %d\" &",
             fileDirectory, fileName, systemConfig.videoPort);
-    //system(buffer);
+    system(buffer);
 
     sprintf(buffer, "appsrc ! video/x-raw,width=%d,height=%d,framerate=%d/1 ! videoconvert ! video/x-raw,format=I420 ! jpegenc ! multifilesink location=%s max-files=1",
             uvcCameraConfig.width, uvcCameraConfig.height, uvcCameraConfig.fps, (fileDirectory + '/' + fileName));
@@ -60,18 +60,12 @@ int main()
     while (true)
     {
         cv::Mat processingFrame, viewingFrame;
-        while (true)
-        {
-            if (!processingCamera.grab() || !viewingCamera.grab())
-                continue;
-            processingCamera.read(processingFrame);
-            viewingCamera.read(viewingFrame);
-            if (processingFrame.empty() || viewingFrame.empty())
-                continue;
-            cv::imshow("Processing Frame", processingFrame);
-            cv::imshow("Viewing Frame", viewingFrame);
-            cv::waitKey(1);
-        }
+        if (!processingCamera.grab() || !viewingCamera.grab())
+            continue;
+        processingCamera.read(processingFrame);
+        viewingCamera.read(viewingFrame);
+        if (processingFrame.empty() || viewingFrame.empty())
+            continue;
 
         //Writes frame to be streamed
         cv::line(viewingFrame, cv::Point{uvcCameraConfig.width / 2, 0}, cv::Point{uvcCameraConfig.width / 2, uvcCameraConfig.height}, cv::Scalar{0, 0, 0});

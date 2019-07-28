@@ -14,6 +14,15 @@ UDPHandler::UDPHandler(std::string ip, int sendPort, int receivePort)
 
 void UDPHandler::send(std::string message)
 {
+	std::string header{};
+	if (message.length() < 10)
+		header.append("000");
+	else if (message.length() < 100)
+		header.append("00");
+	else if (message.length() < 1000)
+		header.append("0");
+	message = header + std::to_string(message.length()) + message;
+
 	socket.send_to(buffer(message, bufferSize), send_endpoint, 0, error);
 }
 
@@ -23,7 +32,11 @@ void UDPHandler::receive()
 	{
 		char buf[bufferSize];
 		socket.receive(buffer(buf, bufferSize), 0, error);
-		receivedMessage = std::string(buf);
+
+		std::string message{buf};
+		int length{std::stoi(message.substr(0, headerSize))};
+
+		receivedMessage = message.substr(headerSize, length);
 	}
 }
 
