@@ -2575,3 +2575,5 @@ CMakeFiles/NewVision.dir/main.cpp.o
  /usr/local/include/opencv2/videostab/stabilizer.hpp
  /usr/local/include/opencv2/videostab/wobble_suppression.hpp
  include/Config.hpp
+ include/Contour.hpp
+ include/UDPHandler.hpp

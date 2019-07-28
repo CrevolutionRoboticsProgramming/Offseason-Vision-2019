@@ -5,8 +5,8 @@ Contour::Contour()
 {
 }
 
-Contour::Contour(std::vector<cv::Point> &contour)
-    : contour{contour}
+Contour::Contour(std::vector<cv::Point> &pointsVector)
+    : pointsVector{pointsVector}
 {
 }
 
@@ -15,12 +15,10 @@ bool Contour::isValid(double minArea, double minRotation, int error)
     //Aproximates a closed polygon with error 3 around the contour and assigns it to newPoly
     cv::Mat newPoly;
 
-
-
-    cv::approxPolyDP(cv::Mat(contour), newPoly, error, true);
+    cv::approxPolyDP(cv::Mat(pointsVector), newPoly, error, true);
 
     //Saves the dimensions of the contour
-    area = cv::contourArea(contour);
+    area = cv::contourArea(pointsVector);
     rotatedBoundingBox = cv::minAreaRect(newPoly);
 
     //If the area of the contour is less than the specified minimum area, delete it

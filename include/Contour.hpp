@@ -6,7 +6,7 @@ class Contour
 {
     public:
     
-    std::vector<cv::Point> contour;
+    std::vector<cv::Point> pointsVector;
     cv::Rect boundingBox;
     cv::RotatedRect rotatedBoundingBox;
     cv::Point2f rotatedBoundingBoxPoints[4];
@@ -14,6 +14,6 @@ class Contour
     double angle;
 
     Contour();
-    Contour(std::vector<cv::Point> &contour);
+    Contour(std::vector<cv::Point> &pointsVector);
     bool isValid(double minArea, double minRotation, int error);
 };

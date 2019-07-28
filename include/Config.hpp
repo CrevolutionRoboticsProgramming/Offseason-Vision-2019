@@ -32,6 +32,10 @@ struct SystemConfig : public Config
 {
     bool verbose{false};
     bool tuning{false};
+    std::string address{"127.0.0.1"};
+    int videoPort{1181};
+    int sendPort{1182};
+    int receivePort{1183};
 
     SystemConfig()
     {
@@ -49,6 +53,62 @@ struct SystemConfig : public Config
                 verbose = value == "true";
             else if (setting == "tuning")
                 tuning = value == "true";
+            else if (setting == "video-port")
+                videoPort = std::stoi(value);
+            else if (setting == "send-port")
+                sendPort = std::stoi(value);
+            else if (setting == "receive-port")
+                receivePort = std::stoi(value);
+        }
+    }
+};
+
+struct VisionConfig : public Config
+{
+    int lowHue{0};
+    int lowSaturation{0};
+    int lowValue{0};
+    int highHue{255};
+    int highSaturation{255};
+    int highValue{255};
+
+    int erosionDilationPasses{1};
+    int minArea{0};
+    int minRotation{0};
+    int allowableError{10000000};
+
+    VisionConfig()
+    {
+        label = "VISION:";
+    }
+
+    void parse(std::string string)
+    {
+        for (std::string pair : split(string, ";"))
+        {
+            std::string setting = split(pair, ":").at(0);
+            std::string value = split(pair, ":").at(1);
+
+            if (setting == "low-hue")
+                lowHue = std::stoi(value);
+            else if (setting == "high-hue")
+                highHue = std::stoi(value);
+            else if (setting == "low-saturation")
+                lowSaturation = std::stoi(value);
+            else if (setting == "high-saturation")
+                highSaturation = std::stoi(value);
+            else if (setting == "low-value")
+                lowValue = std::stoi(value);
+            else if (setting == "high-value")
+                highValue = std::stoi(value);
+            else if (setting == "erosion-dilation-passes")
+                erosionDilationPasses = std::stoi(value);
+            else if (setting == "min-area")
+                minArea = std::stoi(value);
+            else if (setting == "min-rotation")
+                minRotation = std::stoi(value);
+            else if (setting == "allowable-error")
+                allowableError = std::stoi(value);
         }
     }
 };
@@ -94,6 +154,7 @@ struct RaspiCameraConfig : public Config
     int fps{15};
     int shutter_speed{200};
     int exposure_mode{1};
+    int horizontalFOV{75};
 
     RaspiCameraConfig()
     {
@@ -117,43 +178,8 @@ struct RaspiCameraConfig : public Config
                 shutter_speed = std::stoi(value);
             else if (setting == "exposure_mode")
                 exposure_mode = std::stoi(value);
-        }
-    }
-};
-
-struct VisionConfig : public Config
-{
-    int lowHue{0};
-    int lowSaturation{0};
-    int lowValue{0};
-    int highHue{255};
-    int highSaturation{255};
-    int highValue{255};
-
-    VisionConfig()
-    {
-        label = "VISION:";
-    }
-
-    void parse(std::string string)
-    {
-        for (std::string pair : split(string, ";"))
-        {
-            std::string setting = split(pair, ":").at(0);
-            std::string value = split(pair, ":").at(1);
-
-            if (setting == "low-hue")
-                lowHue = std::stoi(value);
-            else if (setting == "high-hue")
-                highHue = std::stoi(value);
-            else if (setting == "low-saturation")
-                lowSaturation = std::stoi(value);
-            else if (setting == "high-saturation")
-                highSaturation = std::stoi(value);
-            else if (setting == "low-value")
-                lowValue = std::stoi(value);
-            else if (setting == "high-value")
-                highValue = std::stoi(value);
+            else if (setting == "horizontal-fov")
+                horizontalFOV = std::stoi(value);
         }
     }
 };

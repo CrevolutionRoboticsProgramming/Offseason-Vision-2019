@@ -21,6 +21,10 @@ boost/asio.hpp
 -
 Config.hpp
 /home/pi/NewVision/Config.hpp
+Contour.hpp
+/home/pi/NewVision/Contour.hpp
+UDPHandler.hpp
+/home/pi/NewVision/UDPHandler.hpp
 
 /home/pi/boost_1_58_0/boost/array.hpp
 boost/detail/workaround.hpp
@@ -16450,5 +16454,23 @@ fstream
 iostream
 -
 functional
+-
+
+include/Contour.hpp
+opencv2/opencv.hpp
+-
+vector
+-
+
+include/UDPHandler.hpp
+boost/asio.hpp
+-
+string
+-
+vector
+-
+iostream
+-
+thread
 -
 
