@@ -1,3 +1,0 @@
-/home/pi/NewVision/CMakeFiles/rebuild_cache.dir
-/home/pi/NewVision/CMakeFiles/NewVision.dir
-/home/pi/NewVision/CMakeFiles/edit_cache.dir
