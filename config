@@ -1,4 +1,4 @@
 SYSTEM:verbose:false;tuning:false;video-port:1181;send-port:1182;receive-port:1183
 VISION:low-hue:0;high-hue:255;low-saturation:0;high-saturation:255;low-value:0;high-value:255;erosion-dilation-passes:2;min-area:60;min-rotation:30;allowable-error:3
-RASPICAM:width:320;height:240;fps:30;shutter_speed:200;exposure_mode:1;horizontal-fov:75
-UVCCAM:width:320;height:240;fps:15;exposure:0;exposure_auto:1
+RASPICAM:width:320;height:240;fps:15;shutter-speed:200;exposure-mode:1;horizontal-fov:75
+UVCCAM:width:320;height:240;fps:30;exposure:0;exposure-auto:1
