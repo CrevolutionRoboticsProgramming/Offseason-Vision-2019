@@ -43,11 +43,11 @@ BoolSetting::BoolSetting(std::string label, bool value)
 }
 void BoolSetting::setValue(std::string value)
 {
-    this->value = value == "true";
+    this->value = value == "true" || value == "1";
 }
 std::string BoolSetting::asString()
 {
-    return std::to_string(value);
+    return value ? "true" : "false";
 }
 
 StringSetting::StringSetting(std::string label, std::string value)

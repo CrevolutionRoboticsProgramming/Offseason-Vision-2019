@@ -30,7 +30,11 @@ void stream()
     {
         if (streamUVC)
         {
-            viewingCamera.read(viewingFrame);
+            if (viewingCamera.grab())
+                viewingCamera.read(viewingFrame);
+            else
+                continue;
+
             cv::line(viewingFrame, cv::Point{uvcCameraConfig.width.value / 2, 0}, cv::Point{uvcCameraConfig.width.value / 2, uvcCameraConfig.height.value}, cv::Scalar{0, 0, 0});
             streamer.write(viewingFrame);
         }
@@ -73,56 +77,66 @@ int main()
     if (systemConfig.verbose.value)
         std::cout << "Configured Exposure\n";
 
-    UDPHandler udpHandler{systemConfig.address.value, systemConfig.sendPort.value, systemConfig.receivePort.value};
+    UDPHandler communicatorUDPHandler{systemConfig.address.value, systemConfig.communicatorPort.value, systemConfig.receivePort.value};
+    UDPHandler robotUDPHandler{systemConfig.address.value, systemConfig.robotPort.value, 9999};
 
-    // Begins streaming on a separate thread to reduce lag (might sound wrong to do this, but I've determined it empirically)
+    // Begins streaming on a separate thread to shorten delays betweem frames
     std::thread streamThread{&stream};
 
     while (true)
     {
         cv::Mat processingFrame;
-        processingCamera.read(processingFrame);
+
+        if (processingCamera.grab())
+            processingCamera.read(processingFrame);
+        else
+            continue;
+
         if (processingFrame.empty())
             continue;
 
         if (systemConfig.verbose.value)
             std::cout << "Grabbed Frame\n";
 
-        if (udpHandler.getMessage() != "")
+        // Handles input via UDP
+        if (communicatorUDPHandler.getMessage() != "")
         {
             std::string configsLabel{"CONFIGS:"};
 
-            if (udpHandler.getMessage().find(configsLabel) != std::string::npos)
+            // If we were sent configs
+            if (communicatorUDPHandler.getMessage().find(configsLabel) != std::string::npos)
             {
-                parseConfigs(configs, udpHandler.getMessage().substr(configsLabel.length()));
+                parseConfigs(configs, communicatorUDPHandler.getMessage().substr(configsLabel.length()));
+
+                writeConfigs(configs);
 
                 if (systemConfig.verbose.value)
                     std::cout << "Updated Configurations\n";
             }
-            else if (udpHandler.getMessage() == "get config")
+            else if (communicatorUDPHandler.getMessage() == "get config")
             {
                 std::string configString{"CONFIGS:"};
                 for (int c{0}; c < configs.size(); ++c)
                 {
-                    configString += '\n' + configs.at(c)->label;
+                    configString += '\n' + configs.at(c)->label + ':';
                     for (int s{0}; s < configs.at(c)->settings.size(); ++s)
                     {
                         configString += configs.at(c)->settings.at(s)->label + "=" + configs.at(c)->settings.at(s)->asString() + ";";
                     }
                 }
-                udpHandler.send(configString);
+                communicatorUDPHandler.send(configString);
 
                 if (systemConfig.verbose.value)
                     std::cout << "Sent Configurations\n";
             }
-            else if (udpHandler.getMessage() == "switch camera")
+            else if (communicatorUDPHandler.getMessage() == "switch camera")
             {
                 streamUVC = !streamUVC;
 
                 if (systemConfig.verbose.value)
                     std::cout << "Switched Camera Stream\n";
             }
-            else if (udpHandler.getMessage() == "reboot")
+            else if (communicatorUDPHandler.getMessage() == "reboot")
             {
                 if (systemConfig.verbose.value)
                     std::cout << "Rebooting...\n";
@@ -134,8 +148,7 @@ int main()
                 std::cout << "Received unknown command via UDP\n";
             }
 
-            std::cout << udpHandler.getMessage() << '\n';
-            udpHandler.clearMessage();
+            communicatorUDPHandler.clearMessage();
         }
 
         //Writes frame to be streamed when not tuning
@@ -152,7 +165,11 @@ int main()
 
         //Writes frame to be streamed when tuning
         if (!streamUVC && systemConfig.tuning.value)
-            streamer.write(processingFrame);
+        {
+            cv::Mat streamFrame;
+            cv::cvtColor(processingFrame, streamFrame, cv::COLOR_GRAY2BGR);
+            streamer.write(streamFrame);
+        }
 
         cv::Canny(processingFrame, processingFrame, 0, 0);
         cv::findContours(processingFrame, rawContours, cv::noArray(), cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
@@ -228,10 +245,9 @@ int main()
         double centerX{((std::max(closestPair.at(0).rotatedBoundingBox.center.x, closestPair.at(1).rotatedBoundingBox.center.x) - std::min(closestPair.at(0).rotatedBoundingBox.center.x, closestPair.at(1).rotatedBoundingBox.center.x)) / 2) + std::min(closestPair.at(0).rotatedBoundingBox.center.x, closestPair.at(1).rotatedBoundingBox.center.x)};
         //double centerY{((std::max(closestPair.at(0).rotatedBoundingBox.center.y, closestPair.at(1).rotatedBoundingBox.center.y) - std::min(closestPair.at(0).rotatedBoundingBox.center.y, closestPair.at(1).rotatedBoundingBox.center.y)) / 2) + std::min(closestPair.at(0).rotatedBoundingBox.center.x, closestPair.at(1).rotatedBoundingBox.center.y)};
 
-        //The original contour will always be the left one since that's what we've specified
         double horizontalAngleError = -((processingFrame.cols / 2.0) - centerX) / processingFrame.cols * raspiCameraConfig.horizontalFOV.value;
 
-        udpHandler.send(std::to_string(horizontalAngleError));
+        robotUDPHandler.send(std::to_string(horizontalAngleError));
     }
 
     return 0;

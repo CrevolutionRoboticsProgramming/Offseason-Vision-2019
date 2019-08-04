@@ -3,7 +3,7 @@
 
 struct Setting
 {
-    std::string label{"butts lol"};
+    std::string label{};
     virtual void setValue(std::string value);
     virtual std::string asString();
 };

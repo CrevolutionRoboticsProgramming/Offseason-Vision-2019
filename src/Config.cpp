@@ -22,7 +22,8 @@ SystemConfig::SystemConfig()
     settings.push_back(std::unique_ptr<Setting>{std::move(&tuning)});
     settings.push_back(std::unique_ptr<Setting>{std::move(&address)});
     settings.push_back(std::unique_ptr<Setting>{std::move(&videoPort)});
-    settings.push_back(std::unique_ptr<Setting>{std::move(&sendPort)});
+    settings.push_back(std::unique_ptr<Setting>{std::move(&communicatorPort)});
+    settings.push_back(std::unique_ptr<Setting>{std::move(&robotPort)});
     settings.push_back(std::unique_ptr<Setting>{std::move(&receivePort)});
 }
 
@@ -100,6 +101,9 @@ void parseConfigs(std::vector<std::unique_ptr<Config>> &configs, std::string str
                 parsedSettings.resize(configs.at(c)->settings.size());
                 for (std::string pair : split(line, ";"))
                 {
+                    if (split(pair, "=").size() == 1)
+                        continue;
+
                     std::string setting = split(pair, "=").at(0);
                     std::string value = split(pair, "=").at(1);
 
@@ -129,4 +133,26 @@ void parseConfigs(std::vector<std::unique_ptr<Config>> &configs, std::string str
         if (!parsedConfigs.at(c))
             std::cout << "Config " + configs.at(c)->label + " was not found\n";
     }
+}
+
+void writeConfigs(std::vector<std::unique_ptr<Config>> &configs)
+{
+    remove("config");
+    std::ofstream file;
+    file.open("config");
+
+    if (!file.is_open())
+        std::cout << "Failed to open configuration file\n";
+
+    for (int c{0}; c < configs.size(); ++c)
+    {
+        file << configs.at(c)->label << ':';
+        for (int s{0}; s < configs.at(c)->settings.size(); ++s)
+        {
+            file << configs.at(c)->settings.at(s)->label << '=' << configs.at(c)->settings.at(s)->asString() << ';';
+        }
+        file << '\n';
+    }
+
+    file.close();
 }

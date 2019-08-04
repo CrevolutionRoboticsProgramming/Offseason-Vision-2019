@@ -23,8 +23,9 @@ struct SystemConfig : public Config
     BoolSetting tuning{"tuning", false};
     StringSetting address{"address", "127.0.0.1"};
     IntSetting videoPort{"video-port", 1181};
-    IntSetting sendPort{"send-port", 1182};
-    IntSetting receivePort{"receive-port", 1183};
+    IntSetting communicatorPort{"communicator-port", 1182};
+    IntSetting robotPort{"robot-port", 1183};
+    IntSetting receivePort{"receive-port", 1184};
 
     SystemConfig();
 };
@@ -71,3 +72,5 @@ struct RaspiCameraConfig : public Config
 // Replace with varidic function/template?
 void parseConfigs(std::vector<std::unique_ptr<Config>> &configs);
 void parseConfigs(std::vector<std::unique_ptr<Config>> &configs, std::string string);
+
+void writeConfigs(std::vector<std::unique_ptr<Config>> &configs);
