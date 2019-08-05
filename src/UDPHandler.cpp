@@ -1,7 +1,7 @@
 #include "UDPHandler.hpp"
 
 UDPHandler::UDPHandler(std::string ip, int sendPort, int receivePort)
-	: ip{ip}, sendPort{sendPort}
+ : sendPort{sendPort}
 {
 	socket.open(ip::udp::v4(), error);
 	send_endpoint = ip::udp::endpoint(ip::address::from_string(ip), sendPort);
@@ -14,29 +14,19 @@ UDPHandler::UDPHandler(std::string ip, int sendPort, int receivePort)
 
 void UDPHandler::send(std::string message)
 {
-	std::string header{};
-	if (message.length() < 10)
-		header.append("000");
-	else if (message.length() < 100)
-		header.append("00");
-	else if (message.length() < 1000)
-		header.append("0");
-	message = header + std::to_string(message.length()) + message;
-
-	socket.send_to(buffer(message, bufferSize), send_endpoint, 0, error);
+	socket.send_to(buffer(message), send_endpoint, 0, error);
 }
 
 void UDPHandler::receive()
 {
 	while (true)
 	{
-		char buf[bufferSize];
-		socket.receive(buffer(buf, bufferSize), 0, error);
+		boost::array<char, 5000> recv_buf;
+		size_t len = socket.receive_from(boost::asio::buffer(recv_buf), send_endpoint);
 
-		std::string message{buf};
-		int length{std::stoi(message.substr(0, headerSize))};
-
-		receivedMessage = message.substr(headerSize, length);
+		receivedMessage = std::string(recv_buf.data()).substr(0, len);
+		
+		send_endpoint = ip::udp::endpoint(send_endpoint.address(), sendPort);
 
 		send("received");
 	}
@@ -59,15 +49,15 @@ void UDPHandler::clearMessage()
 
 std::string UDPHandler::getIP()
 {
-	return ip;
+	return send_endpoint.address().to_string();
 }
 
 int UDPHandler::getSendPort()
 {
-	return sendPort;
+	return send_endpoint.port();
 }
 
 int UDPHandler::getReceivePort()
 {
-	return receivePort;
+	return receive_endpoint.port();
 }

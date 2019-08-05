@@ -252,10 +252,10 @@ int main()
         }
 
         //For clarity
-        double centerX{std::min(closestPair.at(0).boundingBox.x, closestPair.at(1).boundingBox.x) + (std::max(closestPair.at(0).boundingBox.x + closestPair.at(0).boundingBox.width, closestPair.at(1).boundingBox.x + closestPair.at(1).boundingBox.width) - std::min(closestPair.at(0).boundingBox.x, closestPair.at(1).boundingBox.x)) / 2};
-        double centerY{std::min(closestPair.at(0).boundingBox.y, closestPair.at(1).boundingBox.y) + (std::max(closestPair.at(0).boundingBox.y + closestPair.at(0).boundingBox.height, closestPair.at(1).boundingBox.y + closestPair.at(1).boundingBox.height) - std::min(closestPair.at(0).boundingBox.y, closestPair.at(1).boundingBox.y)) / 2};
+        double centerX{closestPair.at(0).rotatedBoundingBox.center.x + ((closestPair.at(1).rotatedBoundingBox.center.x - closestPair.at(0).rotatedBoundingBox.center.x) / 2)};
+        double centerY{closestPair.at(0).rotatedBoundingBox.center.y + ((closestPair.at(1).rotatedBoundingBox.center.y - closestPair.at(0).rotatedBoundingBox.center.y) / 2)};
 
-        double horizontalAngleError = -((processingFrame.cols / 2.0) - centerX) / processingFrame.cols * raspiCameraConfig.horizontalFOV.value;
+        double horizontalAngleError{-((processingFrame.cols / 2.0) - centerX) / processingFrame.cols * raspiCameraConfig.horizontalFOV.value};
 
         robotUDPHandler.send(std::to_string(horizontalAngleError));
 

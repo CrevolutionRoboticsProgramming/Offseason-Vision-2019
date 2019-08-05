@@ -1,6 +1,8 @@
 #pragma once
 
 #include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/array.hpp>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -8,23 +10,21 @@
 
 using namespace boost::asio;
 
-class UDPHandler {
+class UDPHandler
+{
 private:
-	std::string ip;
-	int sendPort, receivePort;
+	int sendPort;
 
 	io_service service;
-	ip::udp::socket socket{ service };
+	ip::udp::socket socket{service};
 	ip::udp::endpoint receive_endpoint, send_endpoint;
 	boost::system::error_code error;
-
-	static const int headerSize{ 4 };
-	static const int bufferSize{ 1024 };
 
 	std::string receivedMessage;
 	std::thread receiveThread;
 
 	void receive();
+	void handleReceive(const boost::system::error_code &error, std::size_t bytes_transferred);
 
 public:
 	UDPHandler(std::string ip, int sendPort, int receivePort);
