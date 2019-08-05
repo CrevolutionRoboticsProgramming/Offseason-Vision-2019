@@ -55,7 +55,7 @@ bool Contour::isValid(double minArea, double minRotation, int error)
     //OpenCV provides a function for this, but it's not consistent with what edge is counted as the top and which indeces count for which corners
     angle = std::atan((rotatedBoundingBoxPoints[secondLowestPoint].y - rotatedBoundingBoxPoints[highestPoint].y) / (rotatedBoundingBoxPoints[highestPoint].x - rotatedBoundingBoxPoints[secondLowestPoint].x)) * 180 / 3.1415926;
 
-    //If the angle isn't extreme enough, delete the contour
+    //If the angle isn't steep enough, delete the contour
     if ((angle < 0 && angle > -minRotation) || (angle > 0 && angle < minRotation))
     {
 	    //std::cout << "Bad angle: " << angle << "\n\n";

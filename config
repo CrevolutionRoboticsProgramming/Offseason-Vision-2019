@@ -1,4 +1,4 @@
 SYSTEM:verbose=false;tuning=true;address=10.42.0.1;video-port=1181;communicator-port=1182;robot-port=1183;receive-port=1184;
-VISION:low-hue=117;low-saturation=0;low-value=85;high-hue=187;high-saturation=130;high-value=180;erosion-dilation-passes=2;min-area=60;min-rotation=30;allowable-error=3;
+VISION:low-hue=86;low-saturation=0;low-value=122;high-hue=206;high-saturation=105;high-value=255;erosion-dilation-passes=2;min-area=60;min-rotation=30;allowable-error=3;
 UVCCAM:width=320;height=240;fps=30;exposure=0;exposure-auto=3;
-RASPICAM:width=320;height=240;fps=15;shutter-speed=100;exposure-mode=1;horizontal-fov=75;
+RASPICAM:width=320;height=240;fps=15;shutter-speed=200;exposure-mode=1;horizontal-fov=75;

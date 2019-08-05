@@ -83,6 +83,7 @@ int main()
     // Begins streaming on a separate thread to shorten delays betweem frames
     std::thread streamThread{&stream};
 
+    cv::Mat streamFrame;
     while (true)
     {
         cv::Mat processingFrame;
@@ -136,6 +137,13 @@ int main()
                 if (systemConfig.verbose.value)
                     std::cout << "Switched Camera Stream\n";
             }
+            else if (communicatorUDPHandler.getMessage() == "restart program")
+            {
+                if (systemConfig.verbose.value)
+                    std::cout << "Restarting program...\n";
+
+                exit(0);
+            }
             else if (communicatorUDPHandler.getMessage() == "reboot")
             {
                 if (systemConfig.verbose.value)
@@ -165,19 +173,21 @@ int main()
 
         //Writes frame to be streamed when tuning
         if (!streamUVC && systemConfig.tuning.value)
-        {
-            cv::Mat streamFrame;
-            cv::cvtColor(processingFrame, streamFrame, cv::COLOR_GRAY2BGR);
             streamer.write(streamFrame);
-        }
+
+        processingFrame.copyTo(streamFrame);
+        cv::cvtColor(streamFrame, streamFrame, cv::COLOR_GRAY2BGR);
 
         cv::Canny(processingFrame, processingFrame, 0, 0);
         cv::findContours(processingFrame, rawContours, cv::noArray(), cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
         for (std::vector<cv::Point> pointsVector : rawContours)
         {
-            if (Contour{pointsVector}.isValid(visionConfig.minArea.value, visionConfig.minRotation.value, visionConfig.allowableError.value))
-                contours.push_back(Contour{pointsVector});
+            Contour newContour{pointsVector};
+            if (newContour.isValid(visionConfig.minArea.value, visionConfig.minRotation.value, visionConfig.allowableError.value))
+            {
+                contours.push_back(newContour);
+            }
         }
 
         std::vector<std::array<Contour, 2>> pairs{};
@@ -242,12 +252,23 @@ int main()
         }
 
         //For clarity
-        double centerX{((std::max(closestPair.at(0).rotatedBoundingBox.center.x, closestPair.at(1).rotatedBoundingBox.center.x) - std::min(closestPair.at(0).rotatedBoundingBox.center.x, closestPair.at(1).rotatedBoundingBox.center.x)) / 2) + std::min(closestPair.at(0).rotatedBoundingBox.center.x, closestPair.at(1).rotatedBoundingBox.center.x)};
-        //double centerY{((std::max(closestPair.at(0).rotatedBoundingBox.center.y, closestPair.at(1).rotatedBoundingBox.center.y) - std::min(closestPair.at(0).rotatedBoundingBox.center.y, closestPair.at(1).rotatedBoundingBox.center.y)) / 2) + std::min(closestPair.at(0).rotatedBoundingBox.center.x, closestPair.at(1).rotatedBoundingBox.center.y)};
+        double centerX{std::min(closestPair.at(0).boundingBox.x, closestPair.at(1).boundingBox.x) + (std::max(closestPair.at(0).boundingBox.x + closestPair.at(0).boundingBox.width, closestPair.at(1).boundingBox.x + closestPair.at(1).boundingBox.width) - std::min(closestPair.at(0).boundingBox.x, closestPair.at(1).boundingBox.x)) / 2};
+        double centerY{std::min(closestPair.at(0).boundingBox.y, closestPair.at(1).boundingBox.y) + (std::max(closestPair.at(0).boundingBox.y + closestPair.at(0).boundingBox.height, closestPair.at(1).boundingBox.y + closestPair.at(1).boundingBox.height) - std::min(closestPair.at(0).boundingBox.y, closestPair.at(1).boundingBox.y)) / 2};
 
         double horizontalAngleError = -((processingFrame.cols / 2.0) - centerX) / processingFrame.cols * raspiCameraConfig.horizontalFOV.value;
 
         robotUDPHandler.send(std::to_string(horizontalAngleError));
+
+        //Preps frame to be streamed
+        if (!streamUVC && systemConfig.tuning.value)
+        {
+            cv::rectangle(streamFrame, closestPair.at(0).boundingBox, cv::Scalar{0, 127.5, 255}, 2);
+            cv::rectangle(streamFrame, closestPair.at(1).boundingBox, cv::Scalar{0, 127.5, 255}, 2);
+            cv::rectangle(streamFrame, cv::Rect{cv::Point2i{std::min(closestPair.at(0).boundingBox.x, closestPair.at(1).boundingBox.x), std::min(closestPair.at(0).boundingBox.y, closestPair.at(1).boundingBox.y)}, cv::Point2i{std::max(closestPair.at(0).boundingBox.x + closestPair.at(0).boundingBox.width, closestPair.at(1).boundingBox.x + closestPair.at(1).boundingBox.width), std::max(closestPair.at(0).boundingBox.y + closestPair.at(0).boundingBox.height, closestPair.at(1).boundingBox.y + closestPair.at(1).boundingBox.height)}}, cv::Scalar{0, 255, 0}, 2);
+            cv::line(streamFrame, cv::Point{centerX, centerY - 10}, cv::Point{centerX, centerY + 10}, cv::Scalar{0, 255, 0}, 2);
+            cv::line(streamFrame, cv::Point{centerX - 10, centerY}, cv::Point{centerX + 10, centerY}, cv::Scalar{0, 255, 0}, 2);
+            cv::putText(streamFrame, "Horizontal Angle of Error: " + std::to_string(horizontalAngleError), cv::Point{0, 10}, cv::FONT_HERSHEY_PLAIN, 1, cv::Scalar{255, 255, 255});
+        }
     }
 
     return 0;
