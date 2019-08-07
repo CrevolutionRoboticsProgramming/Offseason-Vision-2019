@@ -8,10 +8,10 @@
 #include "Contour.hpp"
 #include "UDPHandler.hpp"
 
-SystemConfig systemConfig{};
-VisionConfig visionConfig{};
-UVCCameraConfig uvcCameraConfig{};
-RaspiCameraConfig raspiCameraConfig{};
+SystemConfig systemConfig;
+VisionConfig visionConfig;
+UVCCameraConfig uvcCameraConfig;
+RaspiCameraConfig raspiCameraConfig;
 
 bool streamUVC{true};
 
@@ -78,7 +78,7 @@ int main()
         std::cout << "Configured Exposure\n";
 
     UDPHandler communicatorUDPHandler{systemConfig.address.value, systemConfig.communicatorPort.value, systemConfig.receivePort.value};
-    UDPHandler robotUDPHandler{systemConfig.address.value, systemConfig.robotPort.value, 9999};
+    UDPHandler robotUDPHandler{"10.28.51.2", systemConfig.robotPort.value, 9999};
 
     // Begins streaming on a separate thread to shorten delays betweem frames
     std::thread streamThread{&stream};
