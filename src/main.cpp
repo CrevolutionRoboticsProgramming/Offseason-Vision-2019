@@ -8,10 +8,10 @@
 #include "Contour.hpp"
 #include "UDPHandler.hpp"
 
-SystemConfig systemConfig;
-VisionConfig visionConfig;
-UVCCameraConfig uvcCameraConfig;
-RaspiCameraConfig raspiCameraConfig;
+SystemConfig systemConfig{};
+VisionConfig visionConfig{};
+UVCCameraConfig uvcCameraConfig{};
+RaspiCameraConfig raspiCameraConfig{};
 
 bool streamUVC{true};
 

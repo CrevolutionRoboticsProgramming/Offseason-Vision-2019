@@ -14,7 +14,7 @@ UDPHandler::UDPHandler(std::string ip, int sendPort, int receivePort)
 
 void UDPHandler::send(std::string message)
 {
-	socket.send_to(buffer(message, 1024), send_endpoint);
+	socket.send_to(buffer(message), send_endpoint);
 }
 
 void UDPHandler::receive()
