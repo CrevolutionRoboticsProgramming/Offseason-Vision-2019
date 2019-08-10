@@ -34,13 +34,13 @@ Please make sure all software prerequisites are installed before continuing.
 If you would like to run the program on startup, follow these steps:
 1. Open a new terminal
 2. Run ```sudo nano /etc/rc.local```
-3. Before ```exit 0```, add a new line with the contents ```cd ~/Offseason-Vision-2019 && ./run.sh```
+3. Before ```exit 0```, add a new line with the contents ```cd ~/Offseason-Vision-2019 && ./run.sh &```
 4. Press ```Ctrl + O``` to write your changes
 5. Press ```Ctrl + X``` to exit
 
 ## Usage
-Once run, the program requires no user input. It includes a custom configuration protocol for storing and updating program-wide values like HSV thresholds and video formatting which can be accessed via our [Vision-Communicator](https://github.com/CrevolutionRoboticsProgramming/Vision-Communicator) JavaFX GUI.
+Once ran, the program requires no user input. It includes a custom configuration protocol for storing and updating program-wide values like HSV thresholds and video formatting which can be accessed via our [Vision-Communicator](https://github.com/CrevolutionRoboticsProgramming/Vision-Communicator) JavaFX GUI.
 
-Once the program identifies a vision target, it calculates its horizontal offset from the center of the target and streams it without labelling via UDP to the roboRIO. The stream can be received with the UDPHandler class included in [CrevoLib](https://github.com/CrevolutionRoboticsProgramming/Robot-Code-2019).
+Once the program identifies a vision target, it calculates its horizontal offset from the center of the target and streams it via UDP without labelling to the roboRIO. The stream can be received with the UDPHandler class included in [CrevoLib](https://github.com/CrevolutionRoboticsProgramming/Robot-Code-2019).
 
 The video stream can be received using either [vision-client.bat](../master/vision-client.bat) for Windows or [vision-client.sh](../master/vision-client.sh) for Linux and MacOS. Both methods require GStreamer to be installed on the client device.
