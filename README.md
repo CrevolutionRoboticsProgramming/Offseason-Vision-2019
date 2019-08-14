@@ -1,9 +1,9 @@
-# Offseason-Vision-2019
+# OffseasonVision2019
 
 ### Crevolution's offseason vision project for 2019
 
 ## Overview
-This is a vision processing program created for the 2019 FRC game, Destination Deep Space. It can identify the game's vision target and send its horizontal offset to a connected roboRIO via UDP. Additionally, it is entirely configurable using the [Vision-Communicator](https://github.com/CrevolutionRoboticsProgramming/Vision-Communicator) JavaFX GUI.
+This is a vision processing program created for the 2019 FRC game, Destination Deep Space. It can identify the game's vision target and send its horizontal offset to a connected roboRIO via UDP. Additionally, it is entirely configurable using the [VisionCommunicator](https://github.com/CrevolutionRoboticsProgramming/VisionCommunicator) JavaFX GUI.
 
 ## Requirements
 Hardware requirements include:
