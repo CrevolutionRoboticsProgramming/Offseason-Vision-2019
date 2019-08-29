@@ -8,6 +8,7 @@
 #include "Contour.hpp"
 #include "UDPHandler.hpp"
 
+std::vector<std::unique_ptr<Config>> configs;
 SystemConfig systemConfig{};
 VisionConfig visionConfig{};
 UVCCameraConfig uvcCameraConfig{};
@@ -41,65 +42,11 @@ void stream()
     }
 }
 
-int main()
+void handleCommunicatorUDP()
 {
-    std::vector<std::unique_ptr<Config>> configs;
-    configs.push_back(std::unique_ptr<Config>{std::move(&systemConfig)});
-    configs.push_back(std::unique_ptr<Config>{std::move(&visionConfig)});
-    configs.push_back(std::unique_ptr<Config>{std::move(&uvcCameraConfig)});
-    configs.push_back(std::unique_ptr<Config>{std::move(&raspiCameraConfig)});
-
-    cv::Mat morphElement{cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3))};
-
-    parseConfigs(configs);
-
-    if (systemConfig.verbose.value)
-        std::cout << "Parsed Configs\n";
-
-    std::string streamingPipeline = "appsrc ! videoconvert ! video/x-raw,format=YUY2 ! jpegenc ! rtpjpegpay ! udpsink host=" + systemConfig.address.value + " port=" + std::to_string(systemConfig.videoPort.value);
-    streamer = cv::VideoWriter{streamingPipeline, cv::CAP_GSTREAMER, 0, 120, cv::Size{uvcCameraConfig.width.value, uvcCameraConfig.height.value}};
-
-    // Camera setup
-    std::string buffer{};
-    buffer = "rpicamsrc shutter-speed=" + std::to_string(raspiCameraConfig.shutterSpeed.value) + " exposure-mode=" + std::to_string(raspiCameraConfig.exposureMode.value) + " ! video/x-raw,width=" + std::to_string(raspiCameraConfig.width.value) + ",height=" + std::to_string(raspiCameraConfig.height.value) + ",framerate=" + std::to_string(raspiCameraConfig.fps.value) + "/1 ! appsink";
-    cv::VideoCapture processingCamera(buffer, cv::CAP_GSTREAMER);
-
-    if (uvcCameraConfig.exposure.value != 0 && uvcCameraConfig.exposureAuto.value != 1)
-    {
-        buffer = "v4l2-ctl -c exposure_auto=" + std::to_string(uvcCameraConfig.exposureAuto.value) + " -c exposure_absolute=" + std::to_string(uvcCameraConfig.exposure.value);
-    }
-    else
-    {
-        buffer = "v4l2-ctl -c exposure_auto=" + std::to_string(uvcCameraConfig.exposureAuto.value);
-    }
-    system(buffer.c_str());
-
-    if (systemConfig.verbose.value)
-        std::cout << "Configured Exposure\n";
-
     UDPHandler communicatorUDPHandler{systemConfig.address.value, systemConfig.communicatorPort.value, systemConfig.receivePort.value};
-    UDPHandler robotUDPHandler{"10.28.51.2", systemConfig.robotPort.value, 9999};
-
-    // Begins streaming on a separate thread to shorten delays betweem frames
-    std::thread streamThread{&stream};
-
-    cv::Mat streamFrame;
     while (true)
     {
-        cv::Mat processingFrame;
-
-        if (processingCamera.grab())
-            processingCamera.read(processingFrame);
-        else
-            continue;
-
-        if (processingFrame.empty())
-            continue;
-
-        if (systemConfig.verbose.value)
-            std::cout << "Grabbed Frame\n";
-
-        // Handles input via UDP
         if (communicatorUDPHandler.getMessage() != "")
         {
             std::string configsLabel{"CONFIGS:"};
@@ -142,7 +89,7 @@ int main()
                 if (systemConfig.verbose.value)
                     std::cout << "Restarting program...\n";
 
-                exit(0);
+                system("sudo pkill Offseason-Visio");
             }
             else if (communicatorUDPHandler.getMessage() == "reboot")
             {
@@ -158,6 +105,67 @@ int main()
 
             communicatorUDPHandler.clearMessage();
         }
+    }
+}
+
+int main()
+{
+    configs.push_back(std::unique_ptr<Config>{std::move(&systemConfig)});
+    configs.push_back(std::unique_ptr<Config>{std::move(&visionConfig)});
+    configs.push_back(std::unique_ptr<Config>{std::move(&uvcCameraConfig)});
+    configs.push_back(std::unique_ptr<Config>{std::move(&raspiCameraConfig)});
+
+    cv::Mat morphElement{cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3))};
+
+    parseConfigs(configs);
+
+    if (systemConfig.verbose.value)
+        std::cout << "Parsed Configs\n";
+
+    // Begins monitoring for messages from the VisionCommunicator on a separate thread so it doesn't stop if the other threads do
+    std::thread handleCommunicatorUDPThread(&handleCommunicatorUDP);
+
+    std::string streamingPipeline = "appsrc ! videoconvert ! video/x-raw,format=YUY2 ! jpegenc ! rtpjpegpay ! udpsink host=" + systemConfig.address.value + " port=" + std::to_string(systemConfig.videoPort.value);
+    streamer = cv::VideoWriter{streamingPipeline, cv::CAP_GSTREAMER, 0, 120, cv::Size{uvcCameraConfig.width.value, uvcCameraConfig.height.value}};
+
+    // Camera setup
+    std::string buffer{};
+    if (uvcCameraConfig.exposure.value != 0 && uvcCameraConfig.exposureAuto.value != 1)
+    {
+        buffer = "v4l2-ctl -c exposure_auto=" + std::to_string(uvcCameraConfig.exposureAuto.value) + " -c exposure_absolute=" + std::to_string(uvcCameraConfig.exposure.value);
+    }
+    else
+    {
+        buffer = "v4l2-ctl -c exposure_auto=" + std::to_string(uvcCameraConfig.exposureAuto.value);
+    }
+    system(buffer.c_str());
+
+    if (systemConfig.verbose.value)
+        std::cout << "Configured Exposure\n";
+
+    // Begins streaming on a separate thread to shorten delays between frames
+    std::thread streamThread{&stream};
+
+    buffer = "rpicamsrc shutter-speed=" + std::to_string(raspiCameraConfig.shutterSpeed.value) + " exposure-mode=" + std::to_string(raspiCameraConfig.exposureMode.value) + " ! video/x-raw,width=" + std::to_string(raspiCameraConfig.width.value) + ",height=" + std::to_string(raspiCameraConfig.height.value) + ",framerate=" + std::to_string(raspiCameraConfig.fps.value) + "/1 ! appsink";
+    cv::VideoCapture processingCamera(buffer, cv::CAP_GSTREAMER);
+
+    UDPHandler robotUDPHandler{"10.28.51.2", systemConfig.robotPort.value, 9999};
+
+    cv::Mat streamFrame;
+    while (true)
+    {
+        cv::Mat processingFrame;
+
+        if (processingCamera.grab())
+            processingCamera.read(processingFrame);
+        else
+            continue;
+
+        if (processingFrame.empty())
+            continue;
+
+        if (systemConfig.verbose.value)
+            std::cout << "Grabbed Frame\n";
 
         //Writes frame to be streamed when not tuning
         if (!streamUVC && !systemConfig.tuning.value)
