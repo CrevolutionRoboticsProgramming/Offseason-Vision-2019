@@ -1,19 +1,5 @@
 #include "Config.hpp"
 
-std::vector<std::string> split(std::string string, std::string regex)
-{
-    std::string newString;
-    std::vector<std::string> returnVector;
-    while (string.find(regex) != std::string::npos)
-    {
-        newString = string.substr(0, string.find(regex));
-        string = string.substr(string.find(regex) + 1, string.length() - 1);
-        returnVector.push_back(newString);
-    }
-    returnVector.push_back(string);
-    return returnVector;
-}
-
 SystemConfig::SystemConfig()
 {
     label = "SYSTEM";
@@ -101,7 +87,7 @@ void parseConfigs(std::vector<std::unique_ptr<Config>> &configs, std::string str
                 parsedSettings.resize(configs.at(c)->settings.size());
                 for (std::string pair : split(line, ";"))
                 {
-                    if (split(pair, "=").size() == 1)
+                    if (split(pair, "=").size() != 2)
                         continue;
 
                     std::string setting = split(pair, "=").at(0);
@@ -111,8 +97,10 @@ void parseConfigs(std::vector<std::unique_ptr<Config>> &configs, std::string str
                     {
                         if (configs.at(c)->settings.at(s)->label == setting)
                         {
-                            configs.at(c)->settings.at(s)->setValue(value);
-                            parsedSettings.at(s) = true;
+                            if (configs.at(c)->settings.at(s)->setValue(value))
+                                parsedSettings.at(s) = true;
+                            else
+                                std::cout << "New value " + value + " for setting " + configs.at(c)->settings.at(s)->label + " in config " + configs.at(c)->label + " is improperly formatted; disregarding\n";
                         }
                     }
                 }

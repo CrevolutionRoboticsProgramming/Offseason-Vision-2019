@@ -21,50 +21,66 @@ struct SystemConfig : public Config
 {
     BoolSetting verbose{"verbose", false};
     BoolSetting tuning{"tuning", false};
-    StringSetting address{"address", "127.0.0.1"};
-    IntSetting videoPort{"video-port", 1181};
-    IntSetting communicatorPort{"communicator-port", 1182};
-    IntSetting robotPort{"robot-port", 1183};
-    IntSetting receivePort{"receive-port", 1184};
+
+    StringSetting address{"address", "127.0.0.1",
+    [=] (std::string value)
+    {
+        bool returnValue{true};
+
+        if (split(value, ".").size() != 4)
+            returnValue = false;
+        for (std::string number : split(value, "."))
+        {
+            if (number.length() == 0 || number.length() > 3)
+                returnValue = false;
+        }
+
+        return returnValue;
+    }};
+
+    IntSetting videoPort{"video-port", 1181, true};
+    IntSetting communicatorPort{"communicator-port", 1182, true};
+    IntSetting robotPort{"robot-port", 1183, true};
+    IntSetting receivePort{"receive-port", 1184, true};
 
     SystemConfig();
 };
 
 struct VisionConfig : public Config
 {
-    IntSetting lowHue{"low-hue", 0};
-    IntSetting lowSaturation{"low-saturation", 0};
-    IntSetting lowValue{"low-value", 0};
-    IntSetting highHue{"high-hue", 255};
-    IntSetting highSaturation{"high-saturation", 255};
-    IntSetting highValue{"high-value", 255};
-    IntSetting erosionDilationPasses{"erosion-dilation-passes", 1};
-    IntSetting minArea{"min-area", 0};
-    IntSetting minRotation{"min-rotation", 0};
-    IntSetting allowableError{"allowable-error", 10000000};
+    IntSetting lowHue{"low-hue", 0, true};
+    IntSetting lowSaturation{"low-saturation", 0, true};
+    IntSetting lowValue{"low-value", 0, true};
+    IntSetting highHue{"high-hue", 255, true};
+    IntSetting highSaturation{"high-saturation", 255, true};
+    IntSetting highValue{"high-value", 255, true};
+    IntSetting erosionDilationPasses{"erosion-dilation-passes", 1, true};
+    IntSetting minArea{"min-area", 0, true};
+    IntSetting minRotation{"min-rotation", 0, true};
+    IntSetting allowableError{"allowable-error", 10000000, true};
 
     VisionConfig();
 };
 
 struct UVCCameraConfig : public Config
 {
-    IntSetting width{"width", 320};
-    IntSetting height{"height", 240};
-    IntSetting fps{"fps", 15};
-    IntSetting exposure{"exposure", 0};
-    IntSetting exposureAuto{"exposure-auto", 1};
+    IntSetting width{"width", 320, true};
+    IntSetting height{"height", 240, true};
+    IntSetting fps{"fps", 15, true};
+    IntSetting exposure{"exposure", 0, true};
+    IntSetting exposureAuto{"exposure-auto", 1, true};
 
     UVCCameraConfig();
 };
 
 struct RaspiCameraConfig : public Config
 {
-    IntSetting width{"width", 320};
-    IntSetting height{"height", 240};
-    IntSetting fps{"fps", 15};
-    IntSetting shutterSpeed{"shutter-speed", 200};
-    IntSetting exposureMode{"exposure-mode", 1};
-    IntSetting horizontalFOV{"horizontal-fov", 75};
+    IntSetting width{"width", 320, true};
+    IntSetting height{"height", 240, true};
+    IntSetting fps{"fps", 15, true};
+    IntSetting shutterSpeed{"shutter-speed", 200, true};
+    IntSetting exposureMode{"exposure-mode", 1, true};
+    IntSetting horizontalFOV{"horizontal-fov", 75, true};
 
     RaspiCameraConfig();
 };

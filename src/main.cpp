@@ -8,6 +8,8 @@
 #include "Contour.hpp"
 #include "UDPHandler.hpp"
 
+// TODO: Start using exceptions
+
 std::vector<std::unique_ptr<Config>> configs;
 SystemConfig systemConfig{};
 VisionConfig visionConfig{};
