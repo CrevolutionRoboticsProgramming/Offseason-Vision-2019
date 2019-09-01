@@ -91,7 +91,7 @@ void handleCommunicatorUDP()
                 if (systemConfig.verbose.value)
                     std::cout << "Restarting program...\n";
 
-                system("sudo pkill Offseason-Visio");
+                system("sudo pkill OffseasonVision");
             }
             else if (communicatorUDPHandler.getMessage() == "reboot")
             {
