@@ -9,7 +9,12 @@ UDPHandler::UDPHandler(std::string ip, int sendPort, int receivePort)
 	socket.bind(receive_endpoint);
 	service.run();
 
-	receiveThread = std::thread(&UDPHandler::receive, this);
+	start();
+}
+
+UDPHandler::~UDPHandler()
+{
+	stop();
 }
 
 void UDPHandler::send(std::string message)
@@ -17,9 +22,9 @@ void UDPHandler::send(std::string message)
 	socket.send_to(buffer(message), send_endpoint);
 }
 
-void UDPHandler::receive()
+void UDPHandler::threadFunction()
 {
-	while (true)
+	while (!stopFlag)
 	{
 		boost::array<char, 1024> recv_buf;
 		size_t len = socket.receive_from(boost::asio::buffer(recv_buf), send_endpoint);
@@ -32,8 +37,9 @@ void UDPHandler::receive()
 	}
 }
 
-void UDPHandler::close()
+void UDPHandler::stop()
 {
+	Thread::stop();
 	socket.close();
 }
 

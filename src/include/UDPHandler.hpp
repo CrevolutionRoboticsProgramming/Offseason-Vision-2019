@@ -6,11 +6,12 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <thread>
+
+#include "Thread.hpp"
 
 using namespace boost::asio;
 
-class UDPHandler
+class UDPHandler : public Thread
 {
 private:
 	int sendPort;
@@ -20,15 +21,15 @@ private:
 	ip::udp::endpoint receive_endpoint, send_endpoint;
 
 	std::string receivedMessage;
-	std::thread receiveThread;
 
-	void receive();
 	void handleReceive(const boost::system::error_code &error, std::size_t bytes_transferred);
+	void threadFunction();
 
 public:
 	UDPHandler(std::string ip, int sendPort, int receivePort);
+	~UDPHandler();
 	void send(std::string message);
-	void close();
+	void stop() override;
 	std::string getMessage();
 	void clearMessage();
 	std::string getIP();

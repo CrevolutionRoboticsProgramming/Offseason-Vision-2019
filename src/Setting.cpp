@@ -39,7 +39,7 @@ bool IntSetting::setValue(std::string value)
         
     return isSanitary;
 }
-std::string IntSetting::asString()
+std::string IntSetting::toString()
 {
     return std::to_string(value);
 }
@@ -68,7 +68,7 @@ bool DoubleSetting::setValue(std::string value)
 
     return isSanitary;
 }
-std::string DoubleSetting::asString()
+std::string DoubleSetting::toString()
 {
     return std::to_string(value);
 }
@@ -83,7 +83,7 @@ bool BoolSetting::setValue(std::string value)
     this->value = value == "true" || value == "1";
     return value == "true" || value == "false" || value == "0" || value == "1";
 }
-std::string BoolSetting::asString()
+std::string BoolSetting::toString()
 {
     return value ? "true" : "false";
 }
@@ -105,12 +105,12 @@ bool StringSetting::setValue(std::string value)
 
     if (customSanitizer)
         isSanitary = sanitizer(value);
-    else
-        this->value = value;
+
+    this->value = value;
 
     return isSanitary;
 }
-std::string StringSetting::asString()
+std::string StringSetting::toString()
 {
     return value;
 }

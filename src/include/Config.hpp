@@ -66,7 +66,7 @@ struct UVCCameraConfig : public Config
 {
     IntSetting width{"width", 320, true};
     IntSetting height{"height", 240, true};
-    IntSetting fps{"fps", 15, true};
+    StringSetting fps{"fps", "61612/513"};
     IntSetting exposure{"exposure", 0, true};
     IntSetting exposureAuto{"exposure-auto", 1, true};
 

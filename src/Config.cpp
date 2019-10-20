@@ -137,7 +137,7 @@ void writeConfigs(std::vector<std::unique_ptr<Config>> &configs)
         file << configs.at(c)->label << ':';
         for (int s{0}; s < configs.at(c)->settings.size(); ++s)
         {
-            file << configs.at(c)->settings.at(s)->label << '=' << configs.at(c)->settings.at(s)->asString() << ';';
+            file << configs.at(c)->settings.at(s)->label << '=' << configs.at(c)->settings.at(s)->toString() << ';';
         }
         file << '\n';
     }
