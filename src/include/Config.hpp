@@ -56,6 +56,7 @@ struct VisionConfig : public Config
     IntSetting highValue{"high-value", 255, true};
     IntSetting erosionDilationPasses{"erosion-dilation-passes", 1, true};
     IntSetting minArea{"min-area", 0, true};
+    IntSetting maxArea{"max-area", 99999999, true};
     IntSetting minRotation{"min-rotation", 0, true};
     IntSetting allowableError{"allowable-error", 10000000, true};
 

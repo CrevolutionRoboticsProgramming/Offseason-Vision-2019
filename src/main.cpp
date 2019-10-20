@@ -95,11 +95,11 @@ private:
             if (systemConfig.verbose.value)
                 std::cout << "Grabbed Frame\n";
 
-            //Writes frame to be streamed when not tuning
+            // Writes frame to be streamed when not tuning
             if (!streamUVC && !systemConfig.tuning.value)
                 streamer.write(processingFrame);
 
-            //Extracts the contours
+            // Extracts the contours
             std::vector<std::vector<cv::Point>> rawContours;
             std::vector<Contour> contours;
             cv::cvtColor(processingFrame, processingFrame, cv::COLOR_BGR2HSV);
@@ -107,7 +107,7 @@ private:
             cv::erode(processingFrame, processingFrame, morphElement, cv::Point(-1, -1), 2);
             cv::dilate(processingFrame, processingFrame, morphElement, cv::Point(-1, -1), 2);
 
-            //Writes vision processing frame to be streamed if requested
+            // Writes vision processing frame to be streamed if requested
             if (!streamUVC)
             {
                 // Writes the frame prepared last iteration
@@ -124,7 +124,7 @@ private:
             for (std::vector<cv::Point> pointsVector : rawContours)
             {
                 Contour newContour{pointsVector};
-                if (newContour.isValid(visionConfig.minArea.value, visionConfig.minRotation.value, visionConfig.allowableError.value))
+                if (newContour.isValid(visionConfig.minArea.value, visionConfig.maxArea.value, visionConfig.minRotation.value, visionConfig.allowableError.value))
                 {
                     contours.push_back(newContour);
                 }
@@ -132,16 +132,16 @@ private:
 
             std::vector<std::array<Contour, 2>> pairs{};
 
-            //Least distant contour initialized with -1 so it's not confused for an actual contour and can be tested for not being valid
+            // Least distant contour initialized with -1 so it's not confused for an actual contour and can be tested for not being valid
             int leastDistantContour{-1};
 
-            //Now that we've identified compliant targets, we find their match (if they have one)
+            // Now that we've identified compliant targets, we find their match (if they have one)
             for (int origContour{0}; origContour < contours.size(); ++origContour)
             {
-                //We identify the left one first because why not
+                // We identify the left one first because why not
                 if (contours.at(origContour).angle > 0)
                 {
-                    //Iterates through all of the contours and compares them against the original
+                    // Iterates through all of the contours and compares them against the original
                     for (int compareContour{0}; compareContour < contours.size(); ++compareContour)
                     {
                         //If the contour to compare against isn't the original
@@ -166,7 +166,7 @@ private:
                         }
                     }
 
-                    //If we found the second contour, add the pair to the list
+                    // If we found the second contour, add the pair to the list
                     if (leastDistantContour != -1)
                     {
                         pairs.push_back(std::array<Contour, 2>{contours.at(origContour), contours.at(leastDistantContour)});
@@ -191,7 +191,7 @@ private:
                 }
             }
 
-            //For clarity
+            // For clarity
             double centerX{closestPair.at(0).rotatedBoundingBox.center.x + ((closestPair.at(1).rotatedBoundingBox.center.x - closestPair.at(0).rotatedBoundingBox.center.x) / 2)};
             double centerY{closestPair.at(0).rotatedBoundingBox.center.y + ((closestPair.at(1).rotatedBoundingBox.center.y - closestPair.at(0).rotatedBoundingBox.center.y) / 2)};
 
@@ -199,7 +199,7 @@ private:
 
             robotUDPHandler.send(std::to_string(horizontalAngleError));
 
-            //Preps frame to be streamed
+            // Preps frame to be streamed
             if (!streamUVC && systemConfig.tuning.value)
             {
                 cv::rectangle(streamFrame, closestPair.at(0).boundingBox, cv::Scalar{0, 127.5, 255}, 2);

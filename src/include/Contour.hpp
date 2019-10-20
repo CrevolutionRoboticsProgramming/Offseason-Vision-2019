@@ -15,5 +15,5 @@ class Contour
 
     Contour();
     Contour(std::vector<cv::Point> &pointsVector);
-    bool isValid(double minArea, double minRotation, int error);
+    bool isValid(double minArea, double maxArea, double minRotation, int error);
 };

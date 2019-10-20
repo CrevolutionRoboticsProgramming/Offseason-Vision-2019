@@ -25,6 +25,7 @@ VisionConfig::VisionConfig()
     settings.push_back(std::unique_ptr<Setting>{std::move(&highValue)});
     settings.push_back(std::unique_ptr<Setting>{std::move(&erosionDilationPasses)});
     settings.push_back(std::unique_ptr<Setting>{std::move(&minArea)});
+    settings.push_back(std::unique_ptr<Setting>{std::move(&maxArea)});
     settings.push_back(std::unique_ptr<Setting>{std::move(&minRotation)});
     settings.push_back(std::unique_ptr<Setting>{std::move(&allowableError)});
 }
