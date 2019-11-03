@@ -15,7 +15,7 @@ pkg_check_modules( GST REQUIRED gstreamer-1.0>=1.4
                                gstreamer-video-1.0>=1.4
                                gstreamer-app-1.0>=1.4 )
 
-INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} ${GST_INCLUDE_DIRS} /usr/include/gstreamer-1.0 src/include )
+INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} ${GST_INCLUDE_DIRS} /usr/include/gstreamer-1.0 include )
 
 file (GLOB OffseasonVision2019_SRC
     "src/*.cpp"

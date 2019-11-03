@@ -17,12 +17,22 @@ VisionConfig visionConfig{};
 UVCCameraConfig uvcCameraConfig{};
 RaspiCameraConfig raspiCameraConfig{};
 
-bool streamUVC{true};
-cv::VideoWriter streamer;
+bool streamProcessingVideo{false};
+cv::VideoWriter processingStreamer;
+
+std::string overlayPath{"/home/pi/OffseasonVision2019/resources"};
+std::string overlayName{"line.png"};
 
 // Streamer
 class : public Thread
 {
+public:
+    void stop() override
+    {
+        system("pkill gst-launch-1.0");
+        Thread::stop();
+    }
+
 private:
     void threadFunction() override
     {
@@ -37,29 +47,9 @@ private:
         if (systemConfig.verbose.value)
             std::cout << "Configured Exposure\n";
 
-        cv::VideoCapture viewingCamera = cv::VideoCapture("v4l2src device=/dev/video0 ! image/jpeg,width=" + uvcCameraConfig.width.toString() + ",height=" + uvcCameraConfig.height.toString() + ",framerate=" + uvcCameraConfig.fps.toString() + " ! jpegdec ! autovideoconvert ! appsink", cv::CAP_GSTREAMER);
-
-        if (systemConfig.verbose.value && !viewingCamera.isOpened())
-            std::cout << "Could not open viewing camera!\n";
-
-        cv::Mat viewingFrame;
-        while (!stopFlag)
-        {
-            if (streamUVC)
-            {
-                if (!viewingCamera.isOpened())
-                    continue;
-
-                if (viewingCamera.grab())
-                    viewingCamera.read(viewingFrame);
-                else
-                    continue;
-
-                cv::line(viewingFrame, cv::Point{uvcCameraConfig.width.value / 2, 0}, cv::Point{uvcCameraConfig.width.value / 2, uvcCameraConfig.height.value}, cv::Scalar{0, 0, 0});
-                streamer.write(viewingFrame);
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds{10});
-        }
+        std::string pipeline{"gst-launch-1.0 v4l2src device=/dev/video0 ! image/jpeg,width=1280,height=720,framerate=" + uvcCameraConfig.fps.toString() + " ! jpegdec ! gdkpixbufoverlay location=" + overlayPath + "/" + overlayName + " ! videoscale ! videorate ! video/x-raw,width=" + uvcCameraConfig.width.toString() + ",height=" + uvcCameraConfig.height.toString() + ",framerate=15/1 ! queue ! jpegenc ! rtpjpegpay ! udpsink host=" + systemConfig.address.toString() + " port=" + systemConfig.videoPort.toString()};
+        std::cout << pipeline << '\n';
+        system(pipeline.c_str());
     }
 } streamThread;
 
@@ -79,7 +69,7 @@ private:
 
         cv::Mat streamFrame;
         cv::Mat processingFrame;
-        while (!stopFlag)
+        for (int frameNumber{1}; !stopFlag; ++frameNumber)
         {
             if (!processingCamera.isOpened())
                 continue;
@@ -92,12 +82,12 @@ private:
             if (processingFrame.empty())
                 continue;
 
-            if (systemConfig.verbose.value)
-                std::cout << "Grabbed Frame\n";
+            if (systemConfig.verbose.value && frameNumber % 10 == 0)
+                std::cout << "Grabbed Frame " + std::to_string(frameNumber) + '\n';
 
             // Writes frame to be streamed when not tuning
-            if (!streamUVC && !systemConfig.tuning.value)
-                streamer.write(processingFrame);
+            if (streamProcessingVideo && !systemConfig.tuning.value)
+                processingStreamer.write(processingFrame);
 
             // Extracts the contours
             std::vector<std::vector<cv::Point>> rawContours;
@@ -108,10 +98,10 @@ private:
             cv::dilate(processingFrame, processingFrame, morphElement, cv::Point(-1, -1), 2);
 
             // Writes vision processing frame to be streamed if requested
-            if (!streamUVC)
+            if (streamProcessingVideo && systemConfig.tuning.value)
             {
                 // Writes the frame prepared last iteration
-                streamer.write(streamFrame);
+                processingStreamer.write(streamFrame);
 
                 // Begins preparing the new frame
                 processingFrame.copyTo(streamFrame);
@@ -200,7 +190,7 @@ private:
             robotUDPHandler.send(std::to_string(horizontalAngleError));
 
             // Preps frame to be streamed
-            if (!streamUVC && systemConfig.tuning.value)
+            if (streamProcessingVideo && systemConfig.tuning.value)
             {
                 cv::rectangle(streamFrame, closestPair.at(0).boundingBox, cv::Scalar{0, 127.5, 255}, 2);
                 cv::rectangle(streamFrame, closestPair.at(1).boundingBox, cv::Scalar{0, 127.5, 255}, 2);
@@ -240,17 +230,17 @@ private:
                     {
                         streamThread.stop();
                         processVisionThread.stop();
-                        while (true)
+
+                        while (streamThread.isRunning || processVisionThread.isRunning)
                         {
-                            if (!streamThread.isRunning && !processVisionThread.isRunning)
-                            {
-                                streamThread.start();
-                                processVisionThread.start();
-                                std::cout << "restarted threads\n";
-                                break;
-                            }
+                            std::cout << "waiting\n";
                             std::this_thread::sleep_for(std::chrono::milliseconds{500});
                         }
+
+                        if (!streamProcessingVideo)
+                            streamThread.start();
+
+                        processVisionThread.start();
                     }
                 }
                 else if (communicatorUDPHandler.getMessage() == "get config")
@@ -271,7 +261,12 @@ private:
                 }
                 else if (communicatorUDPHandler.getMessage() == "switch camera")
                 {
-                    streamUVC = !streamUVC;
+                    streamProcessingVideo = !streamProcessingVideo;
+
+                    if (!streamProcessingVideo)
+                        streamThread.start();
+                    else
+                        streamThread.stop();
 
                     if (systemConfig.verbose.value)
                         std::cout << "Switched Camera Stream\n";
@@ -316,9 +311,9 @@ int main()
 
     handleCommunicatorUDPThread.start();
 
-    // Sets up the pipeline for streaming video to the client
-    std::string streamingPipeline = "appsrc ! videoconvert ! video/x-raw,format=YUY2 ! jpegenc ! rtpjpegpay ! udpsink host=" + systemConfig.address.value + " port=" + std::to_string(systemConfig.videoPort.value);
-    streamer = cv::VideoWriter{streamingPipeline, cv::CAP_GSTREAMER, 0, 120, cv::Size{uvcCameraConfig.width.value, uvcCameraConfig.height.value}};
+    // Sets up the pipeline for streaming modified video to the client
+    std::string processingStreamingPipeline{"appsrc ! videoconvert ! video/x-raw,format=YUY2 ! jpegenc ! rtpjpegpay ! udpsink host=" + systemConfig.address.value + " port=" + std::to_string(systemConfig.videoPort.value)};
+    processingStreamer = cv::VideoWriter{processingStreamingPipeline, cv::CAP_GSTREAMER, 0, 15, cv::Size{uvcCameraConfig.width.value, uvcCameraConfig.height.value}};
 
     streamThread.start();
     processVisionThread.start();
