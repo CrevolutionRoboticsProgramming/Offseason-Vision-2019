@@ -5,8 +5,7 @@
 
 class Contour
 {
-    public:
-    
+public:
     std::vector<cv::Point> pointsVector;
     cv::Rect boundingBox;
     cv::RotatedRect rotatedBoundingBox;

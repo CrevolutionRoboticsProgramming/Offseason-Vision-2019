@@ -19,7 +19,7 @@ vision:
 uvccam:
   width: 320
   height: 240
-  fps: 30
+  everyNthFrame: 2
   exposure: 0
   exposureAuto: 3
 raspicam:
