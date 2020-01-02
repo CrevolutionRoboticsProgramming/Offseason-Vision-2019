@@ -18,6 +18,7 @@ Software requirements include:
 * [gst-rpicamsrc](https://github.com/thaytan/gst-rpicamsrc)
 * [OpenCV 3.4.2](https://github.com/opencv/opencv/archive/3.4.2.zip) installed with GStreamer support
 * [Boost 1.58.0](https://sourceforge.net/projects/boost/files/boost/1.58.0/) (only the system module is used)
+* [mjpg-streamer](https://github.com/jacksonliam/mjpg-streamer)
 * [yaml-cpp](https://github.com/jbeder/yaml-cpp/)
 
 ## Installing
