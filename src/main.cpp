@@ -2,54 +2,159 @@
 #include <string>
 #include <fstream>
 #include <functional>
+#include <yaml-cpp/yaml.h>
 #include <opencv2/opencv.hpp>
 #include <boost/asio.hpp>
+
 #include "Config.hpp"
+#include "MJPEGWriter/MJPEGWriter.h"
 #include "Thread.hpp"
 #include "Contour.hpp"
 #include "UDPHandler.hpp"
 
-// TODO: Start using exceptions
+std::string configDir{"resources/config.yaml"};
 
-std::vector<std::unique_ptr<Config>> configs;
 SystemConfig systemConfig{};
 VisionConfig visionConfig{};
-UVCCameraConfig uvcCameraConfig{};
-RaspiCameraConfig raspiCameraConfig{};
+UvccamConfig uvccamConfig{};
+RaspicamConfig raspicamConfig{};
+
+template <typename T>
+T getYamlValue(YAML::Node yaml, std::string category, std::string setting)
+{
+    if (yaml[setting])
+        return yaml[setting].as<T>();
+
+    if (!yaml[category] || !yaml[category][setting])
+    {
+        std::cout << "Could not find setting " << setting << " in category " << category << '\n';
+        return T{};
+    }
+
+    return yaml[category][setting].as<T>();
+}
+
+void parseConfigs(YAML::Node yamlConfig)
+{
+    std::vector<Config *> configs{};
+    configs.push_back(std::move(&systemConfig));
+    configs.push_back(std::move(&visionConfig));
+    configs.push_back(std::move(&uvccamConfig));
+    configs.push_back(std::move(&raspicamConfig));
+
+    for (Config *config : configs)
+    {
+        for (Setting *setting : config->settings)
+        {
+            if (dynamic_cast<IntSetting *>(setting) != nullptr)
+            {
+                dynamic_cast<IntSetting *>(setting)->value = getYamlValue<int>(yamlConfig, config->getTag(), setting->getTag());
+            }
+            else if (dynamic_cast<BoolSetting *>(setting) != nullptr)
+            {
+                dynamic_cast<BoolSetting *>(setting)->value = getYamlValue<bool>(yamlConfig, config->getTag(), setting->getTag());
+            }
+            else if (dynamic_cast<StringSetting *>(setting) != nullptr)
+            {
+                std::string value = getYamlValue<std::string>(yamlConfig, config->getTag(), setting->getTag());
+                if (value != std::string{})
+                    dynamic_cast<StringSetting *>(setting)->value = value;
+            }
+        }
+    }
+
+    if (systemConfig.verbose.value)
+        std::cout << "Parsed Configs\n";
+}
+
+std::string getCurrentConfig()
+{
+    std::vector<Config *> configs{};
+    configs.push_back(std::move(&systemConfig));
+    configs.push_back(std::move(&visionConfig));
+    configs.push_back(std::move(&uvccamConfig));
+    configs.push_back(std::move(&raspicamConfig));
+
+    YAML::Node currentConfig;
+    for (Config *config : configs)
+    {
+        for (Setting *setting : config->settings)
+        {
+            if (dynamic_cast<IntSetting *>(setting) != nullptr)
+            {
+                currentConfig[config->getTag()][setting->getTag()] = dynamic_cast<IntSetting *>(setting)->value;
+            }
+            else if (dynamic_cast<BoolSetting *>(setting) != nullptr)
+            {
+                currentConfig[config->getTag()][setting->getTag()] = dynamic_cast<BoolSetting *>(setting)->value;
+            }
+            else if (dynamic_cast<StringSetting *>(setting) != nullptr)
+            {
+                currentConfig[config->getTag()][setting->getTag()] = dynamic_cast<StringSetting *>(setting)->value;
+            }
+        }
+    }
+
+    YAML::Emitter configEmitter;
+    configEmitter.SetMapFormat(YAML::Block);
+    configEmitter << currentConfig;
+
+    return configEmitter.c_str();
+}
 
 bool streamProcessingVideo{false};
-cv::VideoWriter processingStreamer;
-
-std::string overlayPath{"/home/pi/OffseasonVision2019/resources"};
-std::string overlayName{"line.png"};
 
 // Streamer
 class : public Thread
 {
-public:
-    void stop() override
-    {
-        system("pkill gst-launch-1.0");
-        Thread::stop();
-    }
-
 private:
-    void threadFunction() override
+    void run() override
     {
-        // Camera setup
-        std::string command{};
-        if (uvcCameraConfig.exposure.value != 0 && uvcCameraConfig.exposureAuto.value != 1)
-            command = "v4l2-ctl -c exposure_auto=" + std::to_string(uvcCameraConfig.exposureAuto.value) + " -c exposure_absolute=" + std::to_string(uvcCameraConfig.exposure.value);
-        else
-            command = "v4l2-ctl -c exposure_auto=" + std::to_string(uvcCameraConfig.exposureAuto.value);
-        system(command.c_str());
+        // Configures camera settings
+        system(("v4l2-ctl -c exposure_auto=" + std::to_string(uvccamConfig.exposureAuto.value) + " -c exposure_absolute=" + std::to_string(uvccamConfig.exposure.value)).c_str());
 
         if (systemConfig.verbose.value)
             std::cout << "Configured Exposure\n";
 
-        std::string pipeline{"gst-launch-1.0 v4l2src device=/dev/video0 ! image/jpeg,width=1280,height=720,framerate=" + uvcCameraConfig.fps.toString() + " ! jpegdec ! gdkpixbufoverlay location=" + overlayPath + "/" + overlayName + " ! videoscale ! videorate ! video/x-raw,width=" + uvcCameraConfig.width.toString() + ",height=" + uvcCameraConfig.height.toString() + ",framerate=15/1 ! queue ! jpegenc ! rtpjpegpay ! udpsink host=" + systemConfig.address.toString() + " port=" + systemConfig.videoPort.toString()};
-        std::cout << pipeline << '\n';
-        system(pipeline.c_str());
+        cv::VideoCapture camera{0};
+        camera.set(cv::CAP_PROP_FOURCC, CV_FOURCC('M', 'J', 'P', 'G'));
+        camera.set(cv::CAP_PROP_FRAME_WIDTH, uvccamConfig.width.value);
+        camera.set(cv::CAP_PROP_FRAME_HEIGHT, uvccamConfig.height.value);
+        camera.set(cv::CAP_PROP_FPS, uvccamConfig.fps.value);
+
+        MJPEGWriter mjpegWriter{systemConfig.videoPort.value};
+
+        // MJPEGWriter needs to be written to once before starting
+        cv::Mat initFrame;
+        camera.read(initFrame);
+        mjpegWriter.write(initFrame);
+        initFrame.release();
+
+        mjpegWriter.start();
+
+        int calculatedFPS{0};
+        long begin{std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::system_clock::now()).time_since_epoch().count()};
+
+        cv::Mat frame;
+        for (int i{0}; !stopFlag; ++i)
+        {
+            if (std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::system_clock::now()).time_since_epoch().count() - begin >= 1)
+            {
+                calculatedFPS = i;
+                i = 0;
+                begin = std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::system_clock::now()).time_since_epoch().count();
+            }
+
+            camera.read(frame);
+            //cv::line(frame, cv::Point{frame.cols / 2, 0}, cv::Point{frame.cols / 2, frame.rows}, cv::Scalar{0, 0, 0}, 1);
+            cv::putText(frame, cv::String{"FPS: " + std::to_string(calculatedFPS)}, cv::Point{2, 12}, cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar{0, 0, 0});
+            mjpegWriter.write(frame);
+        }
+
+        mjpegWriter.stop();
+
+        camera.release();
+        frame.release();
     }
 } streamThread;
 
@@ -57,12 +162,13 @@ private:
 class : public Thread
 {
 private:
-    cv::Mat morphElement{cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3))};
-    UDPHandler robotUDPHandler{"10.28.51.2", systemConfig.robotPort.value, 9999};
-
-    void threadFunction() override
+    void run() override
     {
-        cv::VideoCapture processingCamera = cv::VideoCapture("rpicamsrc shutter-speed=" + std::to_string(raspiCameraConfig.shutterSpeed.value) + " exposure-mode=" + std::to_string(raspiCameraConfig.exposureMode.value) + " ! video/x-raw,width=" + std::to_string(raspiCameraConfig.width.value) + ",height=" + std::to_string(raspiCameraConfig.height.value) + ",framerate=" + std::to_string(raspiCameraConfig.fps.value) + "/1 ! appsink", cv::CAP_GSTREAMER);
+        cv::Mat morphElement{cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3))};
+        UDPHandler robotUDPHandler{9999};
+        boost::asio::ip::udp::endpoint robotEndpoint{boost::asio::ip::address::from_string("10.28.51.2"), systemConfig.robotPort.value};
+        cv::VideoCapture processingCamera{"rpicamsrc shutter-speed=" + std::to_string(raspicamConfig.shutterSpeed.value) + " exposure-mode=" + std::to_string(raspicamConfig.exposureMode.value) + " ! video/x-raw,width=" + std::to_string(raspicamConfig.width.value) + ",height=" + std::to_string(raspicamConfig.height.value) + ",framerate=" + std::to_string(raspicamConfig.fps.value) + "/1 ! appsink", cv::CAP_GSTREAMER};
+        MJPEGWriter mjpegWriter{systemConfig.videoPort.value};
 
         if (systemConfig.verbose.value && !processingCamera.isOpened())
             std::cout << "Could not open processing camera!\n";
@@ -85,9 +191,20 @@ private:
             if (systemConfig.verbose.value && frameNumber % 10 == 0)
                 std::cout << "Grabbed Frame " + std::to_string(frameNumber) + '\n';
 
+            if (streamProcessingVideo)
+            {
+                if (!mjpegWriter.isOpened())
+                {
+                    mjpegWriter.write(processingFrame);
+                    mjpegWriter.start();
+                }
+            }
+            else if (mjpegWriter.isOpened())
+                mjpegWriter.stop();
+
             // Writes frame to be streamed when not tuning
             if (streamProcessingVideo && !systemConfig.tuning.value)
-                processingStreamer.write(processingFrame);
+                mjpegWriter.write(processingFrame);
 
             // Extracts the contours
             std::vector<std::vector<cv::Point>> rawContours;
@@ -101,7 +218,7 @@ private:
             if (streamProcessingVideo && systemConfig.tuning.value)
             {
                 // Writes the frame prepared last iteration
-                processingStreamer.write(streamFrame);
+                mjpegWriter.write(streamFrame);
 
                 // Begins preparing the new frame
                 processingFrame.copyTo(streamFrame);
@@ -174,8 +291,8 @@ private:
                 double comparePairCenter{((std::max(pairs.at(p).at(0).rotatedBoundingBox.center.x, pairs.at(p).at(1).rotatedBoundingBox.center.x) - std::min(pairs.at(p).at(0).rotatedBoundingBox.center.x, pairs.at(p).at(1).rotatedBoundingBox.center.x)) / 2) + std::min(pairs.at(p).at(0).rotatedBoundingBox.center.x, pairs.at(p).at(1).rotatedBoundingBox.center.x)};
                 double closestPairCenter{((std::max(closestPair.at(0).rotatedBoundingBox.center.x, closestPair.at(1).rotatedBoundingBox.center.x) - std::min(closestPair.at(0).rotatedBoundingBox.center.x, closestPair.at(1).rotatedBoundingBox.center.x)) / 2) + std::min(closestPair.at(0).rotatedBoundingBox.center.x, closestPair.at(1).rotatedBoundingBox.center.x)};
 
-                if (std::abs(comparePairCenter) - (raspiCameraConfig.width.value / 2) <
-                    std::abs(closestPairCenter) - (raspiCameraConfig.width.value / 2))
+                if (std::abs(comparePairCenter) - (raspicamConfig.width.value / 2) <
+                    std::abs(closestPairCenter) - (raspicamConfig.width.value / 2))
                 {
                     closestPair = std::array<Contour, 2>{pairs.at(p).at(0), pairs.at(p).at(1)};
                 }
@@ -185,9 +302,9 @@ private:
             double centerX{closestPair.at(0).rotatedBoundingBox.center.x + ((closestPair.at(1).rotatedBoundingBox.center.x - closestPair.at(0).rotatedBoundingBox.center.x) / 2)};
             double centerY{closestPair.at(0).rotatedBoundingBox.center.y + ((closestPair.at(1).rotatedBoundingBox.center.y - closestPair.at(0).rotatedBoundingBox.center.y) / 2)};
 
-            double horizontalAngleError{-((processingFrame.cols / 2.0) - centerX) / processingFrame.cols * raspiCameraConfig.horizontalFOV.value};
+            double horizontalAngleError{-((processingFrame.cols / 2.0) - centerX) / processingFrame.cols * raspicamConfig.horizontalFov.value};
 
-            robotUDPHandler.send(std::to_string(horizontalAngleError));
+            robotUDPHandler.sendTo(std::to_string(horizontalAngleError), robotEndpoint);
 
             // Preps frame to be streamed
             if (streamProcessingVideo && systemConfig.tuning.value)
@@ -197,7 +314,7 @@ private:
                 cv::rectangle(streamFrame, cv::Rect{cv::Point2i{std::min(closestPair.at(0).boundingBox.x, closestPair.at(1).boundingBox.x), std::min(closestPair.at(0).boundingBox.y, closestPair.at(1).boundingBox.y)}, cv::Point2i{std::max(closestPair.at(0).boundingBox.x + closestPair.at(0).boundingBox.width, closestPair.at(1).boundingBox.x + closestPair.at(1).boundingBox.width), std::max(closestPair.at(0).boundingBox.y + closestPair.at(0).boundingBox.height, closestPair.at(1).boundingBox.y + closestPair.at(1).boundingBox.height)}}, cv::Scalar{0, 255, 0}, 2);
                 cv::line(streamFrame, cv::Point{centerX, centerY - 10}, cv::Point{centerX, centerY + 10}, cv::Scalar{0, 255, 0}, 2);
                 cv::line(streamFrame, cv::Point{centerX - 10, centerY}, cv::Point{centerX + 10, centerY}, cv::Scalar{0, 255, 0}, 2);
-                cv::putText(streamFrame, "Horizontal Angle of Error: " + std::to_string(horizontalAngleError), cv::Point{0, 10}, cv::FONT_HERSHEY_PLAIN, 1, cv::Scalar{255, 255, 255});
+                cv::putText(streamFrame, "Horizontal Angle of Error: " + std::to_string(horizontalAngleError), cv::Point{0, 10}, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar{255, 255, 255});
             }
             std::this_thread::sleep_for(std::chrono::milliseconds{10});
         }
@@ -208,9 +325,10 @@ private:
 class : public Thread
 {
 private:
-    UDPHandler communicatorUDPHandler{systemConfig.address.value, systemConfig.communicatorPort.value, systemConfig.receivePort.value};
-    void threadFunction() override
+    void run() override
     {
+        UDPHandler communicatorUDPHandler{systemConfig.receivePort.value};
+
         while (!stopFlag)
         {
             if (communicatorUDPHandler.getMessage() != "")
@@ -220,8 +338,19 @@ private:
                 // If we were sent configs
                 if (communicatorUDPHandler.getMessage().find(configsLabel) != std::string::npos)
                 {
-                    parseConfigs(configs, communicatorUDPHandler.getMessage().substr(configsLabel.length()));
-                    writeConfigs(configs);
+                    parseConfigs(YAML::Load(communicatorUDPHandler.getMessage().substr(configsLabel.length()).c_str()));
+
+                    // Writes the changes to file
+                    remove(configDir.c_str());
+                    std::ofstream file;
+                    file.open(configDir);
+
+                    if (!file.is_open())
+                        std::cout << "Failed to open configuration file\n";
+
+                    file << getCurrentConfig() << '\n';
+
+                    file.close();
 
                     if (systemConfig.verbose.value)
                         std::cout << "Updated Configurations\n";
@@ -233,7 +362,7 @@ private:
 
                         while (streamThread.isRunning || processVisionThread.isRunning)
                         {
-                            std::cout << "waiting\n";
+                            std::cout << "Waiting for streaming and vision processing streams to end...\n";
                             std::this_thread::sleep_for(std::chrono::milliseconds{500});
                         }
 
@@ -245,28 +374,23 @@ private:
                 }
                 else if (communicatorUDPHandler.getMessage() == "get config")
                 {
-                    std::string configString{"CONFIGS:"};
-                    for (int c{0}; c < configs.size(); ++c)
-                    {
-                        configString += '\n' + configs.at(c)->label + ':';
-                        for (int s{0}; s < configs.at(c)->settings.size(); ++s)
-                        {
-                            configString += configs.at(c)->settings.at(s)->label + "=" + configs.at(c)->settings.at(s)->toString() + ";";
-                        }
-                    }
-                    communicatorUDPHandler.send(configString);
+                    std::string configTag{"CONFIGS:\n"};
+
+                    communicatorUDPHandler.reply(configTag + getCurrentConfig());
 
                     if (systemConfig.verbose.value)
                         std::cout << "Sent Configurations\n";
                 }
                 else if (communicatorUDPHandler.getMessage() == "switch camera")
                 {
-                    streamProcessingVideo = !streamProcessingVideo;
+                    bool newStreamProcessingVideo = !streamProcessingVideo;
 
-                    if (!streamProcessingVideo)
+                    if (!newStreamProcessingVideo)
                         streamThread.start();
                     else
                         streamThread.stop();
+
+                    streamProcessingVideo = newStreamProcessingVideo;
 
                     if (systemConfig.verbose.value)
                         std::cout << "Switched Camera Stream\n";
@@ -287,7 +411,7 @@ private:
                 }
                 else
                 {
-                    std::cout << "Received unknown command via UDP\n";
+                    std::cout << "Received unknown command via UDP: " + communicatorUDPHandler.getMessage() + '\n';
                 }
 
                 communicatorUDPHandler.clearMessage();
@@ -299,21 +423,9 @@ private:
 
 int main()
 {
-    configs.push_back(std::unique_ptr<Config>{std::move(&systemConfig)});
-    configs.push_back(std::unique_ptr<Config>{std::move(&visionConfig)});
-    configs.push_back(std::unique_ptr<Config>{std::move(&uvcCameraConfig)});
-    configs.push_back(std::unique_ptr<Config>{std::move(&raspiCameraConfig)});
-
-    parseConfigs(configs);
-
-    if (systemConfig.verbose.value)
-        std::cout << "Parsed Configs\n";
+    parseConfigs(YAML::LoadFile(configDir));
 
     handleCommunicatorUDPThread.start();
-
-    // Sets up the pipeline for streaming modified video to the client
-    std::string processingStreamingPipeline{"appsrc ! videoconvert ! video/x-raw,format=YUY2 ! jpegenc ! rtpjpegpay ! udpsink host=" + systemConfig.address.value + " port=" + std::to_string(systemConfig.videoPort.value)};
-    processingStreamer = cv::VideoWriter{processingStreamingPipeline, cv::CAP_GSTREAMER, 0, 15, cv::Size{uvcCameraConfig.width.value, uvcCameraConfig.height.value}};
 
     streamThread.start();
     processVisionThread.start();

@@ -18,6 +18,8 @@ protected:
     // function should exit if stopFlag is true
     bool stopFlag = false;
 
+    ~Thread();
+
     // Defines the code for the thread to execute
-    virtual void threadFunction() = 0;
+    virtual void run() = 0;
 };

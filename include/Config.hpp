@@ -1,93 +1,114 @@
 #pragma once
-#include <string>
+
 #include <vector>
-#include <unordered_map>
-#include <fstream>
-#include <iostream>
-#include <functional>
-#include <memory>
-#include <sstream>
+
 #include "Setting.hpp"
 
-std::vector<std::string> split(std::string string, std::string regex);
-
-struct Config
+class Config
 {
-    std::string label{"UNLABELED"};
-    std::vector<std::unique_ptr<Setting>> settings;
-};
+private:
+    std::string mTag;
 
-struct SystemConfig : public Config
-{
-    BoolSetting verbose{"verbose", false};
-    BoolSetting tuning{"tuning", false};
+public:
+    std::vector<Setting *> settings{};
 
-    StringSetting address{"address", "127.0.0.1",
-    [=] (std::string value)
+    Config(std::string tag)
     {
-        bool returnValue{true};
+        mTag = tag;
+    }
 
-        if (split(value, ".").size() != 4)
-            returnValue = false;
-        for (std::string number : split(value, "."))
-        {
-            if (number.length() == 0 || number.length() > 3)
-                returnValue = false;
-        }
-
-        return returnValue;
-    }};
-
-    IntSetting videoPort{"video-port", 1181, true};
-    IntSetting communicatorPort{"communicator-port", 1182, true};
-    IntSetting robotPort{"robot-port", 1183, true};
-    IntSetting receivePort{"receive-port", 1184, true};
-
-    SystemConfig();
+    std::string getTag()
+    {
+        return mTag;
+    }
 };
 
-struct VisionConfig : public Config
+class SystemConfig : public Config
 {
-    IntSetting lowHue{"low-hue", 0, true};
-    IntSetting lowSaturation{"low-saturation", 0, true};
-    IntSetting lowValue{"low-value", 0, true};
-    IntSetting highHue{"high-hue", 255, true};
-    IntSetting highSaturation{"high-saturation", 255, true};
-    IntSetting highValue{"high-value", 255, true};
-    IntSetting erosionDilationPasses{"erosion-dilation-passes", 1, true};
-    IntSetting minArea{"min-area", 0, true};
-    IntSetting maxArea{"max-area", 99999999, true};
-    IntSetting minRotation{"min-rotation", 0, true};
-    IntSetting allowableError{"allowable-error", 10000000, true};
+public:
+    BoolSetting verbose{"verbose"};
+    BoolSetting tuning{"tuning"};
+    IntSetting videoPort{"videoPort"};
+    IntSetting robotPort{"robotPort"};
+    IntSetting receivePort{"receivePort"};
 
-    VisionConfig();
+    SystemConfig() : Config("system")
+    {
+        settings.push_back(std::move(&verbose));
+        settings.push_back(std::move(&tuning));
+        settings.push_back(std::move(&videoPort));
+        settings.push_back(std::move(&robotPort));
+        settings.push_back(std::move(&receivePort));
+    }
 };
 
-struct UVCCameraConfig : public Config
+class VisionConfig : public Config
 {
-    IntSetting width{"width", 320, true};
-    IntSetting height{"height", 240, true};
-    StringSetting fps{"fps", "61612/513"};
-    IntSetting exposure{"exposure", 0, true};
-    IntSetting exposureAuto{"exposure-auto", 1, true};
+public:
+    IntSetting lowHue{"lowHue"};
+    IntSetting lowSaturation{"lowSaturation"};
+    IntSetting lowValue{"lowValue"};
+    IntSetting highHue{"highHue"};
+    IntSetting highSaturation{"highSaturation"};
+    IntSetting highValue{"highValue"};
+    IntSetting erosionDilationPasses{"erosionDilationPasses"};
+    IntSetting minArea{"minArea"};
+    IntSetting maxArea{"maxArea"};
+    IntSetting minRotation{"minRotation"};
+    IntSetting allowableError{"allowableError"};
 
-    UVCCameraConfig();
+    VisionConfig() : Config("vision")
+    {
+        settings.push_back(std::move(&lowHue));
+        settings.push_back(std::move(&lowSaturation));
+        settings.push_back(std::move(&lowValue));
+        settings.push_back(std::move(&highHue));
+        settings.push_back(std::move(&highSaturation));
+        settings.push_back(std::move(&highValue));
+        settings.push_back(std::move(&erosionDilationPasses));
+        settings.push_back(std::move(&minArea));
+        settings.push_back(std::move(&maxArea));
+        settings.push_back(std::move(&minRotation));
+        settings.push_back(std::move(&allowableError));
+    }
 };
 
-struct RaspiCameraConfig : public Config
+class UvccamConfig : public Config
 {
-    IntSetting width{"width", 320, true};
-    IntSetting height{"height", 240, true};
-    IntSetting fps{"fps", 15, true};
-    IntSetting shutterSpeed{"shutter-speed", 200, true};
-    IntSetting exposureMode{"exposure-mode", 1, true};
-    IntSetting horizontalFOV{"horizontal-fov", 75, true};
+public:
+    IntSetting width{"width"};
+    IntSetting height{"height"};
+    IntSetting fps{"fps"};
+    IntSetting exposure{"exposure"};
+    IntSetting exposureAuto{"exposureAuto"};
 
-    RaspiCameraConfig();
+    UvccamConfig() : Config("uvccam")
+    {
+        settings.push_back(std::move(&width));
+        settings.push_back(std::move(&height));
+        settings.push_back(std::move(&fps));
+        settings.push_back(std::move(&exposure));
+        settings.push_back(std::move(&exposureAuto));
+    }
 };
 
-// Replace with varidic function/template?
-void parseConfigs(std::vector<std::unique_ptr<Config>> &configs);
-void parseConfigs(std::vector<std::unique_ptr<Config>> &configs, std::string string);
+class RaspicamConfig : public Config
+{
+public:
+    IntSetting width{"width"};
+    IntSetting height{"height"};
+    IntSetting fps{"fps"};
+    IntSetting shutterSpeed{"shutterSpeed"};
+    IntSetting exposureMode{"exposureMode"};
+    IntSetting horizontalFov{"horizontalFov"};
 
-void writeConfigs(std::vector<std::unique_ptr<Config>> &configs);
+    RaspicamConfig() : Config("raspicam")
+    {
+        settings.push_back(std::move(&width));
+        settings.push_back(std::move(&height));
+        settings.push_back(std::move(&fps));
+        settings.push_back(std::move(&shutterSpeed));
+        settings.push_back(std::move(&exposureMode));
+        settings.push_back(std::move(&horizontalFov));
+    }
+};

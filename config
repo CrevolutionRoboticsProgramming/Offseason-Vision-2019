@@ -1,4 +1,0 @@
-SYSTEM:verbose=false;tuning=true;address=10.42.0.1;video-port=1181;communicator-port=1182;robot-port=1183;receive-port=1184;
-VISION:low-hue=6;low-saturation=0;low-value=97;high-hue=231;high-saturation=116;high-value=255;erosion-dilation-passes=2;min-area=60;max-area=5000;min-rotation=30;allowable-error=3;
-UVCCAM:width=384;height=216;fps=61612/513;exposure=0;exposure-auto=3;
-RASPICAM:width=384;height=216;fps=15;shutter-speed=200;exposure-mode=1;horizontal-fov=75;

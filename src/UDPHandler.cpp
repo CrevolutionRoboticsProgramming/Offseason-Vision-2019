@@ -1,69 +1,77 @@
 #include "UDPHandler.hpp"
 
-UDPHandler::UDPHandler(std::string ip, int sendPort, int receivePort)
- : sendPort{sendPort}
+UDPHandler::UDPHandler(int port) : mSocket{mIoService, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port)}
 {
-	socket.open(ip::udp::v4());
-	send_endpoint = ip::udp::endpoint(ip::address::from_string(ip), sendPort);
-	receive_endpoint = ip::udp::endpoint(ip::udp::v4(), receivePort);
-	socket.bind(receive_endpoint);
-	service.run();
-
-	start();
+    startReceiving();
+    start();
 }
 
 UDPHandler::~UDPHandler()
 {
-	stop();
+    stop();
 }
 
-void UDPHandler::send(std::string message)
+void UDPHandler::run()
 {
-	socket.send_to(buffer(message), send_endpoint);
-}
-
-void UDPHandler::threadFunction()
-{
-	while (!stopFlag)
-	{
-		boost::array<char, 1024> recv_buf;
-		size_t len = socket.receive_from(boost::asio::buffer(recv_buf), send_endpoint);
-
-		receivedMessage = std::string(recv_buf.data()).substr(0, len);
-
-		send_endpoint = ip::udp::endpoint(send_endpoint.address(), sendPort);
-
-		send("received");
-	}
+    mIoService.run();
 }
 
 void UDPHandler::stop()
 {
-	Thread::stop();
-	socket.close();
+    mIoService.stop();
+    Thread::stop();
+}
+
+void UDPHandler::startReceiving()
+{
+    // Populates mRemoteEndpoint
+    mSocket.async_receive_from(
+        boost::asio::buffer(mReceiveBuffer), mRemoteEndpoint,
+        boost::bind(&UDPHandler::handleReceive, this,
+                    boost::asio::placeholders::error,
+                    boost::asio::placeholders::bytes_transferred));
+}
+
+void UDPHandler::sendTo(std::string message, boost::asio::ip::udp::endpoint sendEndpoint)
+{
+    boost::shared_ptr<std::string> messagePtr(new std::string(message));
+
+    // Consumes sendEndpoint
+    mSocket.async_send_to(boost::asio::buffer(*messagePtr), sendEndpoint,
+                          boost::bind(&UDPHandler::handleSend, this, messagePtr,
+                                      boost::asio::placeholders::error,
+                                      boost::asio::placeholders::bytes_transferred));
+}
+
+void UDPHandler::reply(std::string message)
+{
+    sendTo(message, mRemoteEndpoint);
+}
+
+void UDPHandler::handleReceive(const boost::system::error_code &error,
+                               std::size_t bytesTransferred)
+{
+    if (!error || error == boost::asio::error::message_size)
+    {
+        mReceivedMessage = std::string{mReceiveBuffer.data()}.substr(0, bytesTransferred);
+
+        reply("received");
+    }
+    startReceiving();
+}
+
+void UDPHandler::handleSend(boost::shared_ptr<std::string> /*message*/,
+                            const boost::system::error_code & /*error*/,
+                            std::size_t /*bytes_transferred*/)
+{
 }
 
 std::string UDPHandler::getMessage()
 {
-	return std::string(receivedMessage);
+    return mReceivedMessage;
 }
 
 void UDPHandler::clearMessage()
 {
-	receivedMessage.clear();
-}
-
-std::string UDPHandler::getIP()
-{
-	return send_endpoint.address().to_string();
-}
-
-int UDPHandler::getSendPort()
-{
-	return send_endpoint.port();
-}
-
-int UDPHandler::getReceivePort()
-{
-	return receive_endpoint.port();
+    mReceivedMessage.clear();
 }

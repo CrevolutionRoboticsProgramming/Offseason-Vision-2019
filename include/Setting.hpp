@@ -1,61 +1,54 @@
-#include <iostream>
-#include <string>
-#include <vector>
-#include <functional>
+#pragma once
 
-std::vector<std::string> split(std::string string, std::string regex);
+#include <string>
 
 class Setting
 {
+private:
+    std::string mTag;
+
 public:
-    std::string label{};
-    virtual bool setValue(std::string value) = 0;
-    virtual std::string toString() = 0;
+    Setting(std::string tag)
+    {
+        mTag = tag;
+    }
+
+    virtual ~Setting()
+    {
+    }
+
+    std::string getTag()
+    {
+        return mTag;
+    }
 };
 
 class IntSetting : public Setting
 {
-private:
-    bool forcePositive;
-
 public:
-    int value{};
-    IntSetting(std::string label, int value, bool forcePositive = false);
-    bool setValue(std::string value) override;
-    std::string toString() override;
-};
+    int value;
 
-class DoubleSetting : public Setting
-{
-private:
-    bool forcePositive;
-
-public:
-    double value{};
-    DoubleSetting(std::string label, double value, bool forcePositive = false);
-    bool setValue(std::string value) override;
-    std::string toString() override;
+    IntSetting(std::string tag) : Setting(tag)
+    {
+    }
 };
 
 class BoolSetting : public Setting
 {
 public:
-    bool value{};
-    BoolSetting(std::string label, bool value);
-    bool setValue(std::string value) override;
-    std::string toString() override;
+    bool value;
+
+    BoolSetting(std::string tag) : Setting(tag)
+    {
+    }
 };
 
 class StringSetting : public Setting
 {
-private:
-    bool customSanitizer{false};
-    std::function<bool (std::string)> sanitizer{};
-
 public:
-    std::string value{};
-    StringSetting(std::string label, std::string value);
-    StringSetting(std::string label, std::string value, const std::function<bool (std::string)> &sanitizer);
-    bool setValue(std::string value) override;
-    std::string toString() override;
+    std::string value;
+
+    StringSetting(std::string tag) : Setting(tag)
+    {
+    }
 };
