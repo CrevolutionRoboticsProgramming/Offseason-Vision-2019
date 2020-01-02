@@ -23,5 +23,5 @@ file (GLOB OffseasonVision2019_SRC
 )
 
 add_executable( OffseasonVision2019 ${OffseasonVision2019_SRC} )
-target_link_libraries( OffseasonVision2019 /home/ryan/yaml-cpp-master/build/libyaml-cpp.a ${OpenCV_LIBS} ${Boost_LIBRARIES} ${GST_LIBRARIES} gstapp-1.0 gstriff-1.0 gstbase-1.0 gstvideo-1.0 gstpbutils-1.0 X11 pthread )
+target_link_libraries( OffseasonVision2019 /home/lib/yaml-cpp-master/build/libyaml-cpp.a ${OpenCV_LIBS} ${Boost_LIBRARIES} ${GST_LIBRARIES} gstapp-1.0 gstriff-1.0 gstbase-1.0 gstvideo-1.0 gstpbutils-1.0 X11 pthread )
 
